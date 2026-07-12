@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
+import { normalizePriceInput } from "@/lib/price";
 import {
   Search,
   SlidersHorizontal,
@@ -242,9 +243,8 @@ function ProductRow({ product, onEdit, onDelete }: ProductRowProps) {
 // ─── Form validation ──────────────────────────────────────────────────────────
 const productSchema = z.object({
   name: z.string().min(2, "Product name must be at least 2 characters."),
-  slug: z.string().optional(),
-  price: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
-    message: "Price must be a valid number greater than 0.",
+  price: z.string().refine((val) => normalizePriceInput(val) !== null, {
+    message: "Price must be a positive number with at most 2 decimals (extra decimals are rounded).",
   }),
   categoryId: z.string().min(1, "Please select a category."),
   sku: z.string().optional(),
@@ -276,7 +276,6 @@ function ProductsPage() {
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: "",
-      slug: "",
       price: "",
       categoryId: "",
       sku: "",
@@ -308,22 +307,7 @@ function ProductsPage() {
   });
 
   // Watchers
-  const nameValue = form.watch("name");
   const selectedCategoryId = form.watch("categoryId");
-
-  // Auto-slugify watch hook
-  useEffect(() => {
-    if (nameValue && !editingId) {
-      const generatedSlug = nameValue
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9\s-]/g, "")
-        .replace(/[\s_]+/g, "-")
-        .replace(/-+/g, "-")
-        .replace(/^-+|-+$/g, "");
-      form.setValue("slug", generatedSlug, { shouldValidate: true });
-    }
-  }, [nameValue, editingId, form]);
 
   // Update dynamic attributes state when category ID changes
   useEffect(() => {
@@ -395,7 +379,6 @@ function ProductsPage() {
     setEditingId(null);
     form.reset({
       name: "",
-      slug: "",
       price: "",
       categoryId: categories[0]?.id || "",
       sku: "",
@@ -412,7 +395,6 @@ function ProductsPage() {
     
     // Core inputs
     form.setValue("name", p.name, { shouldValidate: true });
-    form.setValue("slug", p.slug, { shouldValidate: true });
     form.setValue("price", String(p.price), { shouldValidate: true });
     form.setValue("categoryId", p.category.id, { shouldValidate: true });
 
@@ -461,22 +443,20 @@ function ProductsPage() {
   };
 
   const onSubmit = (values: ProductFormValues) => {
-    let finalSlug = "";
     let finalSku = "";
 
     if (editingId) {
       const existingProduct = products?.find((p) => p.id === editingId);
-      finalSlug = existingProduct?.slug || values.name.toLowerCase().trim().replace(/[\s_]+/g, '-').replace(/[^\w-]+/g, '');
       finalSku = (existingProduct?.attributes as any)?.sku || 'PRD-' + Date.now().toString().slice(-6) + '-' + Math.random().toString(36).substring(2, 5).toUpperCase();
     } else {
-      finalSlug = values.name.toLowerCase().trim().replace(/[\s_]+/g, '-').replace(/[^\w-]+/g, '');
       finalSku = 'PRD-' + Date.now().toString().slice(-6) + '-' + Math.random().toString(36).substring(2, 5).toUpperCase();
     }
 
+    const normalizedPrice = normalizePriceInput(values.price) || values.price;
+
     const payload = {
       name: values.name,
-      slug: finalSlug,
-      price: values.price,
+      price: normalizedPrice,
       categoryId: values.categoryId,
       attributes: {
         sku: finalSku,
@@ -631,7 +611,19 @@ function ProductsPage() {
                     <FormItem className="grid gap-1">
                       <FormLabel className="text-[13px] font-medium">Price (RON)</FormLabel>
                       <FormControl>
-                        <Input placeholder="199.99" className="h-11" {...field} />
+                        <Input
+                          placeholder="199.99"
+                          className="h-11"
+                          inputMode="decimal"
+                          {...field}
+                          onBlur={(e) => {
+                            const normalized = normalizePriceInput(e.target.value);
+                            if (normalized !== null) {
+                              form.setValue("price", normalized, { shouldValidate: true });
+                            }
+                            field.onBlur();
+                          }}
+                        />
                       </FormControl>
                       <FormMessage className="text-xs" />
                     </FormItem>
@@ -732,7 +724,7 @@ function ProductsPage() {
                   render={({ field }) => (
                     <FormItem className="grid gap-1">
                       <FormLabel className="text-[13px] font-medium">Category</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} modal={false}>
+                      <Select onValueChange={field.onChange} value={field.value} {...({ modal: false } as any)}>
                         <FormControl>
                           <SelectTrigger className="h-11 border-border/70">
                             <SelectValue placeholder="Select a category" />

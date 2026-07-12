@@ -49,10 +49,6 @@ export const Route = createFileRoute("/categories")({
 // ─── Validation Schema ───────────────────────────────────────────────────────
 const categorySchema = z.object({
   name: z.string().min(2, "Category name must be at least 2 characters."),
-  slug: z
-    .string()
-    .min(2, "Slug must be at least 2 characters.")
-    .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens."),
 });
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
@@ -100,25 +96,10 @@ function CategoriesPage() {
   // Form wiring
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
-    defaultValues: { name: "", slug: "" },
+    defaultValues: { name: "" },
   });
 
   const { isSubmitting } = form.formState;
-
-  // Auto-slugify watch hook (disabled during edit to allow custom slugs)
-  const nameValue = form.watch("name");
-  useEffect(() => {
-    if (nameValue && !editingId) {
-      const generatedSlug = nameValue
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9\s-]/g, "") // Remove non-alphanumeric except spaces/hyphens
-        .replace(/[\s_]+/g, "-") // Replace spaces/underscores with hyphens
-        .replace(/-+/g, "-") // Replace multiple hyphens
-        .replace(/^-+|-+$/g, ""); // Trim hyphens
-      form.setValue("slug", generatedSlug, { shouldValidate: true });
-    }
-  }, [nameValue, editingId, form]);
 
   // Create Mutation wiring
   const mutation = useMutation({
@@ -169,7 +150,7 @@ function CategoriesPage() {
   });
 
   const handleCancelEdit = () => {
-    form.reset({ name: "", slug: "" });
+    form.reset({ name: "" });
     setAttrs([]);
     setEditingId(null);
     setIsModalOpen(false);
@@ -178,7 +159,6 @@ function CategoriesPage() {
   const onSubmit = (values: CategoryFormValues) => {
     const payload = {
       name: values.name,
-      slug: values.slug,
       expectedAttributes: attrs,
     };
     if (editingId) {
@@ -200,7 +180,7 @@ function CategoriesPage() {
           <Button
             onClick={() => {
               setEditingId(null);
-              form.reset({ name: "", slug: "" });
+              form.reset({ name: "" });
               setAttrs([]);
               setIsModalOpen(true);
             }}
@@ -262,7 +242,6 @@ function CategoriesPage() {
                         onClick={() => {
                           setEditingId(c.id);
                           form.setValue("name", c.name, { shouldValidate: true });
-                          form.setValue("slug", c.slug, { shouldValidate: true });
                           setAttrs(getCategoryAttributes(c));
                           setIsModalOpen(true);
                         }}
@@ -321,20 +300,7 @@ function CategoriesPage() {
                   )}
                 />
 
-                {/* Slug */}
-                <FormField
-                  control={form.control}
-                  name="slug"
-                  render={({ field }) => (
-                    <FormItem className="grid gap-1">
-                      <FormLabel className="text-[13px] font-medium">Slug</FormLabel>
-                      <FormControl>
-                        <Input placeholder="accesorii" className="h-11" {...field} />
-                      </FormControl>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )}
-                />
+
 
                 {/* Custom Attributes (Showcase only) */}
                 <div className="grid gap-2">

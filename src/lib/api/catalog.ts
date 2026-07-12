@@ -8,6 +8,7 @@ export interface Category {
   id: string;
   name: string;
   slug: string;
+  expectedAttributes?: string[];
   _count: { products: number };
 }
 
@@ -69,7 +70,6 @@ export async function fetchProducts(): Promise<Product[]> {
 
 export interface CreateProductData {
   name: string;
-  slug: string;
   price: string | number;
   categoryId: string;
   attributes?: ProductAttributes;
@@ -108,7 +108,6 @@ export async function deleteProduct(id: string): Promise<void> {
 
 export interface CreateCategoryData {
   name: string;
-  slug: string;
   expectedAttributes?: string[];
 }
 

@@ -18,7 +18,6 @@ import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductsIndexRouteImport } from './routes/products.index'
 import { Route as StoreTenantSlugRouteImport } from './routes/store.$tenantSlug'
-import { Route as ProductsNewRouteImport } from './routes/products.new'
 import { Route as OrdersIdRouteImport } from './routes/orders.$id'
 import { Route as StoreTenantSlugSuccessRouteImport } from './routes/store.$tenantSlug.success'
 
@@ -67,11 +66,6 @@ const StoreTenantSlugRoute = StoreTenantSlugRouteImport.update({
   path: '/store/$tenantSlug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProductsNewRoute = ProductsNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => ProductsRoute,
-} as any)
 const OrdersIdRoute = OrdersIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -92,7 +86,6 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/team': typeof TeamRoute
   '/orders/$id': typeof OrdersIdRoute
-  '/products/new': typeof ProductsNewRoute
   '/store/$tenantSlug': typeof StoreTenantSlugRouteWithChildren
   '/products/': typeof ProductsIndexRoute
   '/store/$tenantSlug/success': typeof StoreTenantSlugSuccessRoute
@@ -105,7 +98,6 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/team': typeof TeamRoute
   '/orders/$id': typeof OrdersIdRoute
-  '/products/new': typeof ProductsNewRoute
   '/store/$tenantSlug': typeof StoreTenantSlugRouteWithChildren
   '/products': typeof ProductsIndexRoute
   '/store/$tenantSlug/success': typeof StoreTenantSlugSuccessRoute
@@ -120,7 +112,6 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/team': typeof TeamRoute
   '/orders/$id': typeof OrdersIdRoute
-  '/products/new': typeof ProductsNewRoute
   '/store/$tenantSlug': typeof StoreTenantSlugRouteWithChildren
   '/products/': typeof ProductsIndexRoute
   '/store/$tenantSlug/success': typeof StoreTenantSlugSuccessRoute
@@ -136,7 +127,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/orders/$id'
-    | '/products/new'
     | '/store/$tenantSlug'
     | '/products/'
     | '/store/$tenantSlug/success'
@@ -149,7 +139,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/orders/$id'
-    | '/products/new'
     | '/store/$tenantSlug'
     | '/products'
     | '/store/$tenantSlug/success'
@@ -163,7 +152,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/orders/$id'
-    | '/products/new'
     | '/store/$tenantSlug'
     | '/products/'
     | '/store/$tenantSlug/success'
@@ -245,13 +233,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreTenantSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/products/new': {
-      id: '/products/new'
-      path: '/new'
-      fullPath: '/products/new'
-      preLoaderRoute: typeof ProductsNewRouteImport
-      parentRoute: typeof ProductsRoute
-    }
     '/orders/$id': {
       id: '/orders/$id'
       path: '/$id'
@@ -281,12 +262,10 @@ const OrdersRouteWithChildren =
   OrdersRoute._addFileChildren(OrdersRouteChildren)
 
 interface ProductsRouteChildren {
-  ProductsNewRoute: typeof ProductsNewRoute
   ProductsIndexRoute: typeof ProductsIndexRoute
 }
 
 const ProductsRouteChildren: ProductsRouteChildren = {
-  ProductsNewRoute: ProductsNewRoute,
   ProductsIndexRoute: ProductsIndexRoute,
 }
 
