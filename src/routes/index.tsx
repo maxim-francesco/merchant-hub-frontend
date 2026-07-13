@@ -10,6 +10,7 @@ import { fetchOrders, type Order } from "@/lib/api/orders";
 import { fetchDashboardMetrics } from "@/lib/api/analytics";
 import { useTenantStore } from "@/lib/store/tenantStore";
 import { ro } from "@/lib/i18n/ro";
+import { STATUS_BADGE_STYLES } from "@/lib/orderStatus";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -56,12 +57,7 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-const statusBadgeStyles: Record<Order["status"], string> = {
-  PENDING: "bg-muted/85 text-muted-foreground border-border/80",
-  PAID: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200/50",
-  SHIPPED: "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border-blue-200/50",
-  CANCELLED: "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border-rose-200/50",
-};
+// Shared badge styles imported from orderStatus
 
 // ─── Dashboard Component ──────────────────────────────────────────────────────
 
@@ -238,7 +234,7 @@ function Dashboard() {
                         <Badge
                           variant="outline"
                           className={`text-[9px] uppercase font-semibold px-1.5 py-0 border mt-1 ${
-                            statusBadgeStyles[order.status]
+                            STATUS_BADGE_STYLES[order.status]
                           }`}
                         >
                           {ro.statuses[order.status]}

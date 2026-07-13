@@ -176,7 +176,20 @@ export const ro = {
     contact: "Contact",
     shippingAddress: "Adresă de livrare",
     statusUpdated: "Statusul comenzii a fost actualizat.",
-    comingSoon: "În curând"
+    comingSoon: "În curând",
+    newOrder: "Comandă nouă",
+    editOrder: "Editează comanda",
+    orderCreated: "Comanda a fost creată.",
+    orderUpdated: "Comanda a fost actualizată.",
+    notEditableHint: "Doar comenzile în așteptare pot fi editate.",
+    addProduct: "Adaugă produs",
+    removeItem: "Elimină",
+    selectProduct: "Selectează un produs",
+    noItemsYet: "Niciun produs adăugat",
+    clientType: "Tip client",
+    quantity: "Cantitate",
+    totalServerNote: "Totalul final este calculat automat.",
+    finalState: "Stare finală"
   },
   team: {
     headTitle: "Gestionare echipă — Commerce OS Admin",
@@ -301,6 +314,7 @@ export const ro = {
     PENDING: "În așteptare",
     PAID: "Plătită",
     SHIPPED: "Expediată",
+    DELIVERED: "Livrată",
     CANCELLED: "Anulată"
   },
   roles: {
@@ -323,7 +337,10 @@ export const ro = {
     PRODUCT_HAS_ORDERS: "Produsul apare în comenzi și nu poate fi șters.",
     INVALID_CREDENTIALS: "Email sau parolă incorecte.",
     INTERNAL_ERROR: "A apărut o eroare. Încearcă din nou.",
-    GENERIC: "A apărut o eroare. Încearcă din nou."
+    GENERIC: "A apărut o eroare. Încearcă din nou.",
+    SAME_STATUS: "Comanda este deja în acest status.",
+    INVALID_STATUS_TRANSITION: "Această schimbare de status nu este permisă.",
+    ORDER_NOT_EDITABLE: "Doar comenzile în așteptare pot fi editate."
   },
   validation: {
     email: "Te rugăm să introduci o adresă de email validă.",

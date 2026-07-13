@@ -13,23 +13,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Loader2, Truck, FileText } from "lucide-react";
+import { ArrowLeft, Loader2, Truck, FileText, Pencil } from "lucide-react";
 import { fetchOrderById, updateOrderStatus, downloadOrderInvoice, type Order } from "@/lib/api/orders";
 import { ro } from "@/lib/i18n/ro";
 import { getErrorMessage } from "@/lib/i18n/getErrorMessage";
 import { toast } from "sonner";
+import { STATUS_BADGE_STYLES, isEditable, nextStatuses } from "@/lib/orderStatus";
+import { OrderFormDialog } from "@/components/orders/OrderFormDialog";
 
 export const Route = createFileRoute("/orders/$id")({
   head: ({ params }) => ({ meta: [{ title: `${params.id.slice(0, 8).toUpperCase()} — ${ro.orders.headTitleSingle}` }] }),
   component: OrderDetail,
 });
 
-const statusBadgeStyles: Record<Order["status"], string> = {
-  PENDING: "bg-muted/80 text-muted-foreground border-border/80",
-  PAID: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/30",
-  SHIPPED: "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30",
-  CANCELLED: "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border-rose-200/50 dark:border-rose-900/30",
-};
+// Shared status badge styles are imported from lib/orderStatus
 
 function fmtPrice(value: string | number): string {
   const num = typeof value === "string" ? parseFloat(value) : value;
@@ -54,6 +51,7 @@ function OrderDetail() {
   const { id } = Route.useParams();
   const queryClient = useQueryClient();
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   const { data: order, isLoading, error, isError } = useQuery({
     queryKey: ["order", id],
@@ -145,7 +143,7 @@ function OrderDetail() {
               <h1 className="text-2xl font-semibold tracking-tight">
                 {order.id.slice(0, 8).toUpperCase()}
               </h1>
-              <Badge variant="outline" className={statusBadgeStyles[order.status]}>
+              <Badge variant="outline" className={STATUS_BADGE_STYLES[order.status]}>
                 {ro.statuses[order.status] ?? order.status}
               </Badge>
             </div>
@@ -157,26 +155,53 @@ function OrderDetail() {
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2">
-            <Select
-              value={order.status}
-              onValueChange={(val) => statusMutation.mutate(val as Order["status"])}
-              disabled={statusMutation.isPending}
-            >
-              <SelectTrigger className="w-[180px] h-9">
-                <SelectValue placeholder={ro.orders.changeStatus} />
-              </SelectTrigger>
-              <SelectContent>
-                {(["PENDING", "PAID", "SHIPPED", "CANCELLED"] as const).map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {ro.statuses[s]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {(() => {
+              const allowedNext = nextStatuses(order.status);
+              const isTerminal = allowedNext.length === 0;
+              if (isTerminal) {
+                return (
+                  <span className="text-sm font-medium text-muted-foreground bg-muted px-3 py-1.5 rounded-md border border-border/80">
+                    {ro.statuses[order.status] ?? order.status} ({ro.orders.finalState})
+                  </span>
+                );
+              }
+              return (
+                <Select
+                  value={order.status}
+                  onValueChange={(val) => statusMutation.mutate(val as Order["status"])}
+                  disabled={statusMutation.isPending}
+                >
+                  <SelectTrigger className="w-[180px] h-9">
+                    <SelectValue placeholder={ro.orders.changeStatus} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={order.status} disabled>
+                      {ro.statuses[order.status] ?? order.status}
+                    </SelectItem>
+                    {allowedNext.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {ro.statuses[s] ?? s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              );
+            })()}
             {statusMutation.isPending && (
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             )}
           </div>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setIsFormOpen(true)}
+            disabled={!isEditable(order.status)}
+            title={!isEditable(order.status) ? ro.orders.notEditableHint : undefined}
+            className={!isEditable(order.status) ? "cursor-not-allowed text-muted-foreground" : ""}
+          >
+            <Pencil className="h-4 w-4 mr-1.5" /> {ro.orders.editOrder}
+          </Button>
 
           <Button
             size="sm"
@@ -321,6 +346,13 @@ function OrderDetail() {
           </Card>
         </div>
       </div>
+
+      <OrderFormDialog
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        mode="edit"
+        initialOrder={order}
+      />
     </AdminLayout>
   );
 }

@@ -26,7 +26,7 @@ export interface Order {
   customerName: string;
   customerEmail: string;
   totalAmount: string; // Decimal returned as string
-  status: "PENDING" | "PAID" | "SHIPPED" | "CANCELLED";
+  status: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
@@ -34,6 +34,21 @@ export interface Order {
   companyName: string | null;
   cui: string | null;
   regCom: string | null;
+}
+
+export interface OrderInputItem {
+  productId: string;
+  quantity: number;
+}
+
+export interface OrderInput {
+  customerName: string;
+  customerEmail: string;
+  customerType: "B2C" | "B2B";
+  companyName?: string;
+  cui?: string;
+  regCom?: string;
+  items: OrderInputItem[];
 }
 
 interface OrdersResponseEnvelope {
@@ -100,6 +115,31 @@ export async function updateOrderStatus(
     status: string;
     data: { order: Order };
   }>(`/orders/${id}/status`, { status });
+  return envelope.data.order;
+}
+
+/**
+ * Create a new order.
+ */
+export async function createOrder(input: OrderInput): Promise<Order> {
+  const { data: envelope } = await apiClient.post<{
+    status: string;
+    data: { order: Order };
+  }>("/orders", input);
+  return envelope.data.order;
+}
+
+/**
+ * Update an existing PENDING order.
+ */
+export async function updateOrder(
+  id: string,
+  input: OrderInput
+): Promise<Order> {
+  const { data: envelope } = await apiClient.put<{
+    status: string;
+    data: { order: Order };
+  }>(`/orders/${id}`, input);
   return envelope.data.order;
 }
 
