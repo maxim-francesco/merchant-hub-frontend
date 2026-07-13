@@ -36,9 +36,11 @@ import {
 } from "lucide-react";
 import { fetchOrders, downloadOrderInvoice, type Order } from "@/lib/api/orders";
 import { useTenantStore } from "@/lib/store/tenantStore";
+import { ro } from "@/lib/i18n/ro";
+import { getErrorMessage } from "@/lib/i18n/getErrorMessage";
 
 export const Route = createFileRoute("/orders")({
-  head: () => ({ meta: [{ title: "Orders — Commerce OS Admin" }] }),
+  head: () => ({ meta: [{ title: ro.orders.headTitle }] }),
   component: OrdersPage,
 });
 
@@ -129,12 +131,12 @@ function OrdersPage() {
       <div className="flex flex-col gap-4">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Orders</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{ro.orders.title}</h1>
           <p className="text-sm text-muted-foreground">
-            Track, fulfill, and invoice customer orders.{" "}
+            {ro.orders.subtitle}{" "}
             {orders && !isLoading && (
               <span className="text-muted-foreground/60">
-                {orders.length} order{orders.length !== 1 ? "s" : ""}
+                {orders.length} {orders.length === 1 ? ro.common.order : ro.common.orders}
               </span>
             )}
           </p>
@@ -145,13 +147,13 @@ function OrdersPage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
             <Input
-              placeholder="Search orders…"
+              placeholder={ro.orders.searchPlaceholder}
               className="pl-9 h-10 bg-background border-border/70 focus-visible:ring-1"
             />
           </div>
           <Button variant="outline" className="h-10 gap-2 text-sm">
             <SlidersHorizontal className="h-4 w-4" />
-            Filters
+            {ro.orders.filters}
           </Button>
         </div>
 
@@ -163,8 +165,7 @@ function OrdersPage() {
           >
             <AlertCircle className="h-4 w-4 mt-px shrink-0" />
             <span>
-              Failed to load orders:{" "}
-              {(error as Error)?.message ?? "Unknown error"}
+              {getErrorMessage(error)}
             </span>
           </div>
         )}
@@ -177,19 +178,19 @@ function OrdersPage() {
                 <TableHeader>
                   <TableRow className="border-b border-border/60 bg-muted/20 hover:bg-muted/20">
                     <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground pl-5 py-3 w-[140px]">
-                      Order ID
+                      {ro.orders.tableId}
                     </TableHead>
                     <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 w-[180px]">
-                      Date
+                      {ro.orders.tableDate}
                     </TableHead>
                     <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3">
-                      Customer
+                      {ro.orders.tableCustomer}
                     </TableHead>
                     <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 text-right">
-                      Total
+                      {ro.orders.tableTotal}
                     </TableHead>
                     <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 pr-5 w-[140px]">
-                      Status
+                      {ro.orders.tableStatus}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -230,7 +231,7 @@ function OrdersPage() {
                             statusBadgeStyles[order.status]
                           }`}
                         >
-                          {order.status}
+                          {ro.statuses[order.status]}
                         </Badge>
                       </TableCell>
                     </TableRow>
@@ -244,9 +245,9 @@ function OrdersPage() {
                         className="py-16 text-center text-muted-foreground"
                       >
                         <ShoppingBag className="h-8 w-8 mx-auto mb-3 opacity-30" />
-                        <p className="text-sm font-medium">No orders found</p>
+                        <p className="text-sm font-medium">{ro.orders.noOrders}</p>
                         <p className="text-xs mt-1 opacity-70">
-                          Transactions will appear here once customers purchase.
+                          {ro.orders.noOrdersDesc}
                         </p>
                       </TableCell>
                     </TableRow>
@@ -274,31 +275,31 @@ function OrdersPage() {
                       statusBadgeStyles[selectedOrder.status]
                     }`}
                   >
-                    {selectedOrder.status}
+                    {ro.statuses[selectedOrder.status]}
                   </Badge>
                 </div>
-                <SheetTitle className="text-xl font-bold tracking-tight mt-3">Order Details</SheetTitle>
+                <SheetTitle className="text-xl font-bold tracking-tight mt-3">{ro.orders.detailsTitle}</SheetTitle>
                 <SheetDescription className="text-xs text-muted-foreground">
-                  View and manage transaction specifics.
+                  {ro.orders.detailsDesc}
                 </SheetDescription>
               </SheetHeader>
 
               {/* Customer Info Card */}
               <div className="flex flex-col gap-4">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
-                  <User className="h-3.5 w-3.5" /> Customer Information
+                  <User className="h-3.5 w-3.5" /> {ro.orders.customerInfo}
                 </h3>
                 <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3 shadow-sm text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Name</span>
+                    <span className="text-muted-foreground">{ro.orders.custName}</span>
                     <span className="font-medium text-foreground">{selectedOrder.customerName}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Email</span>
+                    <span className="text-muted-foreground">{ro.orders.custEmail}</span>
                     <span className="font-medium text-foreground truncate max-w-[200px]">{selectedOrder.customerEmail}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Placed At</span>
+                    <span className="text-muted-foreground">{ro.orders.placedAt}</span>
                     <span className="font-medium text-foreground">{formatDate(selectedOrder.createdAt)}</span>
                   </div>
                 </div>
@@ -307,7 +308,7 @@ function OrdersPage() {
               {/* Order Items Section */}
               <div className="flex flex-col gap-3 flex-1">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
-                  <Package className="h-3.5 w-3.5" /> Purchased Items ({selectedOrder.items.length})
+                  <Package className="h-3.5 w-3.5" /> {ro.orders.purchasedItems} ({selectedOrder.items.length})
                 </h3>
                 <div className="flex flex-col gap-2">
                   {selectedOrder.items.map((item) => (
@@ -317,7 +318,7 @@ function OrdersPage() {
                     >
                       <div className="min-w-0 pr-3">
                         <p className="text-sm font-medium text-foreground truncate">
-                          {item.product?.name || "Deleted Product"}
+                          {item.product?.name || ro.orders.deletedProduct}
                         </p>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {item.quantity} × {fmtPrice(item.price)}
@@ -334,13 +335,13 @@ function OrdersPage() {
               {/* Order summary footer */}
               <div className="border-t border-border/60 pt-5 mt-auto space-y-3.5">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-muted-foreground">Subtotal</span>
+                  <span className="text-sm font-medium text-muted-foreground">{ro.orders.subtotal}</span>
                   <span className="text-sm font-medium text-foreground tabular-nums">
                     {fmtPrice(selectedOrder.totalAmount)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center border-t border-border/30 pt-3">
-                  <span className="text-base font-semibold text-foreground">Total</span>
+                  <span className="text-base font-semibold text-foreground">{ro.orders.total}</span>
                   <span className="text-lg font-bold text-foreground tabular-nums">
                     {fmtPrice(selectedOrder.totalAmount)}
                   </span>
@@ -357,7 +358,7 @@ function OrdersPage() {
                   ) : (
                     <FileText className="h-4 w-4" />
                   )}
-                  {downloadingInvoiceId === selectedOrder.id ? "Generating PDF..." : "Download Invoice"}
+                  {downloadingInvoiceId === selectedOrder.id ? ro.orders.generatingPdf : ro.orders.downloadInvoice}
                 </Button>
               </div>
             </>

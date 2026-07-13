@@ -9,12 +9,13 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { fetchOrders, type Order } from "@/lib/api/orders";
 import { fetchDashboardMetrics } from "@/lib/api/analytics";
 import { useTenantStore } from "@/lib/store/tenantStore";
+import { ro } from "@/lib/i18n/ro";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Commerce OS Admin" },
-      { name: "description", content: "Multi-tenant headless commerce admin dashboard." },
+      { title: ro.dashboard.headTitle },
+      { name: "description", content: ro.dashboard.headDesc },
     ],
   }),
   component: Dashboard,
@@ -91,32 +92,32 @@ function Dashboard() {
   // Static/Calculated metrics card list
   const metricsCards = [
     {
-      label: "Total Sales",
+      label: ro.dashboard.totalSales,
       value: isLoading ? null : totalSalesCount.toString(),
-      change: "Live synced",
+      change: ro.dashboard.liveSynced,
       icon: ShoppingBag,
-      subtext: "Non-cancelled orders"
+      subtext: ro.dashboard.nonCancelled
     },
     {
-      label: "Active Orders",
+      label: ro.dashboard.activeOrders,
       value: isLoading ? null : activeOrdersCount.toString(),
-      change: "Fulfill now",
+      change: ro.dashboard.fulfillNow,
       icon: PackageCheck,
-      subtext: "Pending/paid orders"
+      subtext: ro.dashboard.pendingPaid
     },
     {
-      label: "Revenue",
+      label: ro.dashboard.revenue,
       value: isLoading ? null : fmtPrice(totalRevenue),
-      change: "Settled",
+      change: ro.dashboard.settled,
       icon: Wallet,
-      subtext: "Paid or shipped"
+      subtext: ro.dashboard.paidShipped
     },
     {
-      label: "System Alerts",
+      label: ro.dashboard.systemAlerts,
       value: "0",
-      change: "All healthy",
+      change: ro.dashboard.allHealthy,
       icon: AlertTriangle,
-      subtext: "No issues reported"
+      subtext: ro.dashboard.noIssues
     },
   ];
 
@@ -125,8 +126,8 @@ function Dashboard() {
       <div className="flex flex-col gap-6">
         {/* Title */}
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
-          <p className="text-sm text-muted-foreground">Welcome back. Here's what's happening today.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{ro.dashboard.overview}</h1>
+          <p className="text-sm text-muted-foreground">{ro.dashboard.welcome}</p>
         </div>
 
         {/* Metrics Row */}
@@ -159,7 +160,7 @@ function Dashboard() {
           {/* Sales Chart Card */}
           <Card className="lg:col-span-2 border-border/60 shadow-sm">
             <CardHeader className="pb-3 border-b border-border/40">
-              <CardTitle className="text-sm font-semibold tracking-wide uppercase text-muted-foreground/80">Sales Volume</CardTitle>
+              <CardTitle className="text-sm font-semibold tracking-wide uppercase text-muted-foreground/80">{ro.dashboard.salesVolume}</CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
               <div className="h-64">
@@ -168,7 +169,7 @@ function Dashboard() {
                 ) : !analytics?.chartData || analytics.chartData.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-muted-foreground text-xs">
                     <ShoppingBag className="h-8 w-8 mb-2 opacity-30" />
-                    No sales data available yet
+                    {ro.dashboard.noSalesData}
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
@@ -201,7 +202,7 @@ function Dashboard() {
           {/* Recent Orders List Card */}
           <Card className="border-border/60 shadow-sm">
             <CardHeader className="pb-3 border-b border-border/40">
-              <CardTitle className="text-sm font-semibold tracking-wide uppercase text-muted-foreground/80">Recent Activity</CardTitle>
+              <CardTitle className="text-sm font-semibold tracking-wide uppercase text-muted-foreground/80">{ro.dashboard.recentActivity}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y divide-border/40">
@@ -217,7 +218,7 @@ function Dashboard() {
                   ))
                 ) : !orders || orders.length === 0 ? (
                   <div className="p-8 text-center text-xs text-muted-foreground">
-                    No orders recorded yet.
+                    {ro.dashboard.noOrdersYet}
                   </div>
                 ) : (
                   orders.slice(0, 5).map((order) => (
@@ -227,7 +228,7 @@ function Dashboard() {
                           {order.customerName}
                         </p>
                         <p className="text-xs text-muted-foreground/60 mt-0.5">
-                          {formatDate(order.createdAt)} • {order.items.length} item{order.items.length !== 1 ? "s" : ""}
+                          {formatDate(order.createdAt)} • {order.items.length} {order.items.length === 1 ? ro.common.item : ro.common.items}
                         </p>
                       </div>
                       <div className="text-right shrink-0">
@@ -240,7 +241,7 @@ function Dashboard() {
                             statusBadgeStyles[order.status]
                           }`}
                         >
-                          {order.status}
+                          {ro.statuses[order.status]}
                         </Badge>
                       </div>
                     </div>

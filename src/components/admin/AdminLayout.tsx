@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
+import { ro } from "@/lib/i18n/ro";
 import {
   LayoutDashboard,
   Package,
@@ -19,20 +20,21 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { cn } from "@/lib/utils";
 
 const nav = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/products", label: "Products", icon: Package },
-  { to: "/categories", label: "Categories", icon: Tags },
-  { to: "/orders", label: "Orders", icon: ShoppingCart },
-  { to: "/team", label: "Team", icon: Users },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/", labelKey: "dashboard", icon: LayoutDashboard },
+  { to: "/products", labelKey: "products", icon: Package },
+  { to: "/categories", labelKey: "categories", icon: Tags },
+  { to: "/orders", labelKey: "orders", icon: ShoppingCart },
+  { to: "/team", labelKey: "team", icon: Users },
+  { to: "/settings", labelKey: "settings", icon: Settings },
 ];
 
 function NavLinks({ onClick }: { onClick?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="flex flex-col gap-1 p-3">
-      {nav.map(({ to, label, icon: Icon }) => {
+      {nav.map(({ to, labelKey, icon: Icon }) => {
         const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
+        const label = ro.nav[labelKey as keyof typeof ro.nav] ?? labelKey;
         return (
           <Link
             key={to}
@@ -103,8 +105,8 @@ function TenantSwitcher() {
     queryClient.invalidateQueries();
   };
 
-  const currentName = activeAdminTenant?.name || "Select Tenant...";
-  const currentSlug = activeAdminTenant?.slug || "No tenant selected";
+  const currentName = activeAdminTenant?.name || ro.common.selectTenant;
+  const currentSlug = activeAdminTenant?.slug || ro.common.noTenantSelected;
 
   return (
     <div className="border-b px-4 py-3 flex items-center justify-between bg-card">
@@ -133,12 +135,12 @@ function TenantSwitcher() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56 mt-1 font-sans">
           <DropdownMenuLabel className="text-[10px] font-bold tracking-wider text-muted-foreground/80 uppercase px-2.5 py-1.5">
-            Workspaces
+            {ro.common.workspaces}
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           {isLoading ? (
             <div className="px-2.5 py-2 text-xs text-muted-foreground flex items-center gap-2">
-              <Loader2 className="h-3 w-3 animate-spin" /> Loading workspaces...
+              <Loader2 className="h-3 w-3 animate-spin" /> {ro.common.loadingWorkspaces}
             </div>
           ) : tenants && tenants.length > 0 ? (
             tenants.map((t: any) => (
@@ -158,7 +160,7 @@ function TenantSwitcher() {
             ))
           ) : (
             <div className="px-2.5 py-2 text-xs text-muted-foreground">
-              No workspaces found.
+              {ro.common.noWorkspaces}
             </div>
           )}
         </DropdownMenuContent>
@@ -182,7 +184,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
         <TenantSwitcher />
         <NavLinks />
         <div className="mt-auto p-3 border-t text-xs text-muted-foreground">
-          <div>Plan: Growth</div>
+          <div>{ro.common.planGrowth}</div>
           <div className="mt-0.5">v1.4.2</div>
         </div>
       </aside>
@@ -207,7 +209,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
             <div className="relative w-full">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
-                placeholder="Search orders, products..."
+                placeholder={ro.common.searchPlaceholder}
                 className="w-full h-9 rounded-md border bg-background pl-8 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring/40"
               />
             </div>

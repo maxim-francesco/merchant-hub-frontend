@@ -6,6 +6,8 @@ import { z } from "zod";
 import { Loader2, ShieldCheck, Eye, EyeOff, AlertCircle, Zap } from "lucide-react";
 
 import { login } from "@/lib/api/auth";
+import { ro } from "@/lib/i18n/ro";
+import { getErrorMessage } from "@/lib/i18n/getErrorMessage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,10 +23,10 @@ import {
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Sign In — Commerce OS" },
+      { title: ro.auth.headTitle },
       {
         name: "description",
-        content: "Securely sign in to your Commerce OS merchant dashboard.",
+        content: ro.auth.headDesc,
       },
     ],
   }),
@@ -33,8 +35,8 @@ export const Route = createFileRoute("/login")({
 
 // ─── Validation schema ────────────────────────────────────────────────────────
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address."),
-  password: z.string().min(6, "Password must be at least 6 characters."),
+  email: z.string().email(ro.validation.email),
+  password: z.string().min(6, ro.validation.passwordMin),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -58,10 +60,7 @@ function LoginPage() {
       await login(values.email, values.password);
       navigate({ to: "/" });
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? "Invalid credentials. Please try again.";
-      setServerError(message);
+      setServerError(getErrorMessage(err));
     }
   }
 
@@ -113,7 +112,7 @@ function LoginPage() {
               Commerce OS
             </h1>
             <p className="mt-1 text-[13px] text-muted-foreground">
-              Merchant dashboard — sign in to continue
+              {ro.auth.subtitle}
             </p>
           </div>
         </div>
@@ -144,13 +143,13 @@ function LoginPage() {
                 render={({ field }) => (
                   <FormItem className="gap-1.5">
                     <FormLabel className="text-[13px] font-medium text-foreground">
-                      Email address
+                      {ro.auth.emailLabel}
                     </FormLabel>
                     <FormControl>
                       <Input
                         id="login-email"
                         type="email"
-                        placeholder="you@company.com"
+                        placeholder={ro.auth.emailPlaceholder}
                         autoComplete="email"
                         className="h-11 rounded-lg border-border bg-background text-sm placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-ring"
                         {...field}
@@ -169,14 +168,14 @@ function LoginPage() {
                   <FormItem className="gap-1.5">
                     <div className="flex items-center justify-between">
                       <FormLabel className="text-[13px] font-medium text-foreground">
-                        Password
+                        {ro.auth.passwordLabel}
                       </FormLabel>
                       <button
                         type="button"
                         className="text-[12px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline transition-colors"
                         tabIndex={-1}
                       >
-                        Forgot password?
+                        {ro.auth.forgotPassword}
                       </button>
                     </div>
                     <FormControl>
@@ -184,14 +183,14 @@ function LoginPage() {
                         <Input
                           id="login-password"
                           type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
+                          placeholder={ro.auth.passwordPlaceholder}
                           autoComplete="current-password"
                           className="h-11 rounded-lg border-border bg-background pr-10 text-sm placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-ring"
                           {...field}
                         />
                         <button
                           type="button"
-                          aria-label={showPassword ? "Hide password" : "Show password"}
+                          aria-label={showPassword ? ro.auth.hidePassword : ro.auth.showPassword}
                           onClick={() => setShowPassword((v) => !v)}
                           className="absolute inset-y-0 right-3 flex items-center text-muted-foreground transition-colors hover:text-foreground"
                           tabIndex={-1}
@@ -219,10 +218,10 @@ function LoginPage() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in…
+                    {ro.auth.signingIn}
                   </>
                 ) : (
-                  "Sign in"
+                  ro.auth.signIn
                 )}
               </Button>
 
@@ -231,7 +230,7 @@ function LoginPage() {
                   <span className="w-full border-t border-border/60" />
                 </div>
                 <div className="relative flex justify-center text-[11px] uppercase tracking-wider">
-                  <span className="bg-card px-3 text-muted-foreground/70">Or</span>
+                  <span className="bg-card px-3 text-muted-foreground/70">{ro.common.or}</span>
                 </div>
               </div>
 
@@ -243,7 +242,7 @@ function LoginPage() {
                 disabled={isSubmitting}
               >
                 <Zap className="mr-2 h-3.5 w-3.5 text-amber-500 fill-amber-500/10" />
-                Login as Demo Admin
+                {ro.auth.demoAdmin}
               </Button>
             </form>
           </Form>
@@ -251,7 +250,7 @@ function LoginPage() {
 
         {/* Footer note */}
         <p className="mt-6 text-center text-[12px] text-muted-foreground">
-          Protected by industry-standard TLS encryption.
+          {ro.auth.footerNote}
         </p>
       </div>
     </div>

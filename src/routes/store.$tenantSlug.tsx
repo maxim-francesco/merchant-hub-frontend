@@ -33,9 +33,11 @@ import {
   type StorefrontProduct,
 } from "@/lib/api/storefront";
 import { useTenantStore } from "@/lib/store/tenantStore";
+import { ro } from "@/lib/i18n/ro";
+import { getErrorMessage } from "@/lib/i18n/getErrorMessage";
 
 export const Route = createFileRoute("/store/$tenantSlug")({
-  head: ({ params }) => ({ meta: [{ title: `${params.tenantSlug || "Store"} — Storefront` }] }),
+  head: ({ params }) => ({ meta: [{ title: `${params.tenantSlug || ro.storefront.headTitle} — Storefront` }] }),
   component: StorefrontPage,
 });
 
@@ -96,11 +98,7 @@ function StorefrontPage() {
         }
       } catch (err: any) {
         if (active) {
-          setResolveError(
-            err.response?.data?.message ||
-              err.message ||
-              "Failed to resolve storefront tenant."
-          );
+          setResolveError(getErrorMessage(err));
           setResolving(false);
         }
       }
@@ -138,7 +136,7 @@ function StorefrontPage() {
     } else {
       setCart([...cart, { product, quantity: 1 }]);
     }
-    toast.success(`${product.name} added to cart.`);
+    toast.success(`${product.name} ${ro.storefront.addToCartSuccess}`);
   };
 
   const updateQty = (productId: string, delta: number) => {
@@ -157,7 +155,7 @@ function StorefrontPage() {
 
   const removeFromCart = (productId: string) => {
     setCart(cart.filter((item) => item.product.id !== productId));
-    toast.error("Item removed from cart.");
+    toast.error(ro.storefront.itemRemoved);
   };
 
   const totalCartItems = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -170,11 +168,11 @@ function StorefrontPage() {
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerName.trim() || !customerEmail.trim()) {
-      toast.error("Please fill in your name and email.");
+      toast.error(ro.validation.checkoutDetailsRequired);
       return;
     }
     if (cart.length === 0) {
-      toast.error("Your cart is empty.");
+      toast.error(ro.validation.cartEmpty);
       return;
     }
 
@@ -191,7 +189,7 @@ function StorefrontPage() {
         items: itemsPayload,
       });
 
-      toast.success("Redirecting to payment gateway...");
+      toast.success(ro.storefront.redirectingPayment);
 
       // Clear the local cart before redirecting
       setCart([]);
@@ -199,8 +197,7 @@ function StorefrontPage() {
       // Redirect the user to the Stripe Checkout page
       window.location.href = response.url;
     } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || "Failed to complete purchase.";
-      toast.error(msg);
+      toast.error(getErrorMessage(err));
     } finally {
       setIsCheckingOut(false);
     }
@@ -217,7 +214,7 @@ function StorefrontPage() {
       <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50/50 text-stone-900 font-sans">
         <Loader2 className="h-8 w-8 animate-spin text-stone-600 mb-4" />
         <p className="text-sm font-medium tracking-wide text-stone-500 uppercase animate-pulse">
-          Resolving Storefront...
+          {ro.storefront.resolving}
         </p>
       </div>
     );
@@ -228,15 +225,13 @@ function StorefrontPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50/50 text-stone-900 font-sans px-4 text-center">
         <div className="max-w-md">
-          <h1 className="text-4xl font-bold tracking-tight mb-3">Storefront Not Found</h1>
-          <p className="text-sm text-stone-500 mb-6">
-            We couldn't resolve the storefront for <strong>"{tenantSlug}"</strong>. Please check the URL or contact support.
-          </p>
+          <h1 className="text-4xl font-bold tracking-tight mb-3">{ro.storefront.notFoundTitle}</h1>
+          <p className="text-sm text-stone-500 mb-6" dangerouslySetInnerHTML={{ __html: ro.storefront.notFoundDesc.replace("{slug}", tenantSlug || "") }} />
           <Link
             to="/login"
             className="inline-flex items-center justify-center rounded-full bg-stone-950 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-stone-850"
           >
-            Go to Admin Dashboard
+            {ro.storefront.goToAdmin}
           </Link>
         </div>
       </div>
@@ -249,11 +244,11 @@ function StorefrontPage() {
       {/* ── Minimal Storefront Header ── */}
       <header className="sticky top-0 z-40 border-b border-stone-200/60 bg-white/80 backdrop-blur-md px-6 sm:px-12 py-5 flex items-center justify-between">
         <div className="flex flex-col gap-0.5">
-          <Link to={`/store/${activeTenant.slug}`} className="text-lg font-bold tracking-widest uppercase">
+          <Link to="/store/$tenantSlug" params={{ tenantSlug: activeTenant.slug }} className="text-lg font-bold tracking-widest uppercase">
             {activeTenant.name}
           </Link>
           <span className="text-[10px] text-stone-400 font-mono tracking-widest uppercase">
-            Storefront POS
+            {ro.storefront.posLabel}
           </span>
         </div>
 
@@ -266,7 +261,7 @@ function StorefrontPage() {
               className="relative h-10 px-4 rounded-full border-stone-200 hover:bg-stone-50 transition-colors"
             >
               <ShoppingBag className="h-4 w-4 mr-2" strokeWidth={2} />
-              <span className="font-semibold text-xs">Cart</span>
+              <span className="font-semibold text-xs">{ro.storefront.cartLabel}</span>
               {totalCartItems > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-stone-900 text-[10px] font-bold text-white tabular-nums ring-4 ring-white">
                   {totalCartItems}
@@ -278,7 +273,7 @@ function StorefrontPage() {
           <SheetContent className="sm:max-w-md border-l border-stone-200/60 p-6 flex flex-col h-full bg-white">
             <SheetHeader className="text-left space-y-1.5 border-b border-stone-200/60 pb-5">
               <SheetTitle className="text-lg font-semibold tracking-wide uppercase">
-                Shopping Cart
+                {ro.storefront.cartTitle}
               </SheetTitle>
             </SheetHeader>
 
@@ -287,9 +282,9 @@ function StorefrontPage() {
               {cart.length === 0 ? (
                 <div className="flex flex-col items-center justify-center text-stone-400 py-16">
                   <ShoppingBag className="h-8 w-8 mb-3 opacity-30 text-stone-900" />
-                  <p className="text-sm font-medium">Your cart is empty</p>
+                  <p className="text-sm font-medium">{ro.storefront.cartEmpty}</p>
                   <p className="text-xs mt-1 text-stone-400/80">
-                    Add products from the catalog to get started.
+                    {ro.storefront.cartEmptyDesc}
                   </p>
                 </div>
               ) : (
@@ -350,7 +345,7 @@ function StorefrontPage() {
             {cart.length > 0 && (
               <div className="border-t border-stone-200/60 pt-5 mt-auto space-y-4">
                 <div className="flex justify-between items-center text-sm font-semibold text-stone-850 pb-2">
-                  <span>Subtotal</span>
+                  <span>{ro.storefront.subtotal}</span>
                   <span className="text-base font-bold text-stone-900 tabular-nums">
                     {fmtPrice(cartSubtotal)}
                   </span>
@@ -359,27 +354,27 @@ function StorefrontPage() {
                 <form onSubmit={handleCheckout} className="space-y-3">
                   <div className="grid gap-1">
                     <Label htmlFor="cust-name" className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
-                      Customer Name
+                      {ro.storefront.custName}
                     </Label>
                     <Input
                       id="cust-name"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="e.g. John Doe"
+                      placeholder={ro.storefront.custNamePlaceholder}
                       className="h-10 border-stone-200 text-xs bg-stone-50/30"
                       required
                     />
                   </div>
                   <div className="grid gap-1">
                     <Label htmlFor="cust-email" className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
-                      Customer Email
+                      {ro.storefront.custEmail}
                     </Label>
                     <Input
                       id="cust-email"
                       type="email"
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
-                      placeholder="e.g. john@example.com"
+                      placeholder={ro.storefront.custEmailPlaceholder}
                       className="h-10 border-stone-200 text-xs bg-stone-50/30"
                       required
                     />
@@ -393,10 +388,10 @@ function StorefrontPage() {
                     {isCheckingOut ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
+                        {ro.storefront.processing}
                       </>
                     ) : (
-                      "Complete Purchase"
+                      ro.storefront.checkoutBtn
                     )}
                   </Button>
                 </form>
@@ -417,7 +412,7 @@ function StorefrontPage() {
               onClick={() => setSelectedCategory(null)}
               className="h-9 px-4 rounded-full text-xs font-semibold"
             >
-              All Collection
+              {ro.storefront.allCollection}
             </Button>
             {categories?.map((cat) => (
               <Button
@@ -431,7 +426,7 @@ function StorefrontPage() {
             ))}
           </div>
           <div className="text-xs text-stone-400 flex items-center gap-1.5 font-medium">
-            <SlidersHorizontal className="h-4 w-4" /> Filters
+            <SlidersHorizontal className="h-4 w-4" /> {ro.storefront.filters}
           </div>
         </div>
 
@@ -440,21 +435,21 @@ function StorefrontPage() {
           <div className="flex flex-col items-center justify-center p-12 border border-emerald-100 rounded-2xl bg-emerald-50/40 text-center max-w-xl mx-auto my-6 animate-in fade-in zoom-in-95">
             <CheckCircle className="h-12 w-12 text-emerald-600 mb-4" />
             <h2 className="text-lg font-bold text-stone-900 tracking-wide uppercase">
-              Order Placed Successfully
+              {ro.storefront.orderSuccessTitle}
             </h2>
             <p className="text-xs text-stone-500 mt-2 max-w-sm">
-              Thank you for shopping with us! Your transaction has been locked.
+              {ro.storefront.orderSuccessDesc}
             </p>
             {createdOrderId && (
               <p className="text-[10px] font-mono bg-emerald-100/50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded mt-4">
-                REF: #{createdOrderId.slice(0, 8).toUpperCase()}
+                {ro.storefront.orderRef.replace("{id}", createdOrderId.slice(0, 8).toUpperCase())}
               </p>
             )}
             <Button
               onClick={() => setCheckoutSuccess(false)}
               className="mt-6 h-10 px-6 rounded-full bg-stone-900 hover:bg-stone-850 text-xs font-semibold text-white uppercase"
             >
-              Continue Shopping
+              {ro.storefront.continueShopping}
             </Button>
           </div>
         )}
@@ -472,7 +467,7 @@ function StorefrontPage() {
               ))
             ) : filteredProducts?.length === 0 ? (
               <div className="col-span-full py-16 text-center text-stone-400">
-                No products found in this collection.
+                {ro.storefront.noProducts}
               </div>
             ) : (
               filteredProducts?.map((product) => {
@@ -520,9 +515,9 @@ function StorefrontPage() {
 
                       <Button
                         onClick={() => addToCart(product)}
-                        className="h-10 w-full bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors"
+                        className="h-10 w-full bg-stone-900 hover:bg-stone-850 text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors"
                       >
-                        Add to Cart
+                        {ro.storefront.addToCart}
                       </Button>
                     </div>
                   </div>
@@ -536,9 +531,9 @@ function StorefrontPage() {
       {/* ── Footer ── */}
       <footer className="border-t border-stone-200/60 bg-white py-12 px-6 text-center text-xs text-stone-400 mt-20">
         <p className="font-semibold text-stone-500 uppercase tracking-widest text-[9px]">
-          {activeTenant.name} POS Storefront
+          {activeTenant.name} {ro.storefront.posLabel}
         </p>
-        <p className="mt-1">Isolated test client connected to API v1.</p>
+        <p className="mt-1">{ro.storefront.connectedApi}</p>
       </footer>
     </div>
   );

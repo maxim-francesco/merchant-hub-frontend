@@ -6,6 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { Plus, X, Loader2, Store, Trash2 } from "lucide-react";
+import { ro } from "@/lib/i18n/ro";
+import { getErrorMessage } from "@/lib/i18n/getErrorMessage";
 
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,13 +44,13 @@ import { fetchCategories, createCategory, updateCategory, deleteCategory } from 
 import { useTenantStore } from "@/lib/store/tenantStore";
 
 export const Route = createFileRoute("/categories")({
-  head: () => ({ meta: [{ title: "Categories — Commerce OS Admin" }] }),
+  head: () => ({ meta: [{ title: ro.categories.headTitle }] }),
   component: CategoriesPage,
 });
 
 // ─── Validation Schema ───────────────────────────────────────────────────────
 const categorySchema = z.object({
-  name: z.string().min(2, "Category name must be at least 2 characters."),
+  name: z.string().min(2, ro.validation.categoryMin),
 });
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
@@ -105,15 +107,14 @@ function CategoriesPage() {
   const mutation = useMutation({
     mutationFn: createCategory,
     onSuccess: () => {
-      toast.success("Category created successfully");
+      toast.success(ro.categories.createdSuccess);
       form.reset();
       setAttrs([]); // Reset local attribute pills state back to empty
       setIsModalOpen(false); // Close Modal
       queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || "Failed to create category.";
-      toast.error(message);
+      toast.error(getErrorMessage(error));
     },
   });
 
@@ -121,7 +122,7 @@ function CategoriesPage() {
   const updateMutation = useMutation({
     mutationFn: updateCategory,
     onSuccess: () => {
-      toast.success("Category updated successfully");
+      toast.success(ro.categories.updatedSuccess);
       form.reset();
       setAttrs([]);
       setEditingId(null);
@@ -129,8 +130,7 @@ function CategoriesPage() {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || "Failed to update category.";
-      toast.error(message);
+      toast.error(getErrorMessage(error));
     },
   });
 
@@ -138,13 +138,12 @@ function CategoriesPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteCategory,
     onSuccess: () => {
-      toast.success("Category deleted successfully");
+      toast.success(ro.categories.deletedSuccess);
       setCategoryToDelete(null); // Close Alert Dialog
       queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || "Failed to delete category.";
-      toast.error(message);
+      toast.error(getErrorMessage(error));
       setCategoryToDelete(null); // Close Alert Dialog
     },
   });
@@ -174,8 +173,8 @@ function CategoriesPage() {
         {/* Header Layout */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/40 pb-5">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Categories</h1>
-            <p className="text-sm text-muted-foreground">Group products and define custom attribute schemas.</p>
+            <h1 className="text-2xl font-semibold tracking-tight">{ro.categories.title}</h1>
+            <p className="text-sm text-muted-foreground">{ro.categories.subtitle}</p>
           </div>
           <Button
             onClick={() => {
@@ -188,7 +187,7 @@ function CategoriesPage() {
             disabled={!activeAdminTenant}
           >
             <Plus className="h-4 w-4" />
-            Create Category
+            {ro.categories.createBtn}
           </Button>
         </div>
 
@@ -211,9 +210,9 @@ function CategoriesPage() {
           ) : categories.length === 0 ? (
             <Card className="flex flex-col items-center justify-center p-12 text-center border-dashed">
               <Store className="h-8 w-8 text-muted-foreground/60 mb-2" />
-              <div className="font-medium text-foreground">No categories found</div>
+              <div className="font-medium text-foreground">{ro.categories.noCategories}</div>
               <div className="text-xs text-muted-foreground mt-0.5 max-w-[280px]">
-                Start structuring your product catalog by creating your first category.
+                {ro.categories.noCategoriesDesc}
               </div>
             </Card>
           ) : (
@@ -224,7 +223,7 @@ function CategoriesPage() {
                     <div className="min-w-0">
                       <div className="font-medium truncate text-foreground">{c.name}</div>
                       <div className="text-xs text-muted-foreground mt-0.5">
-                        {c._count?.products ?? 0} products
+                        {c._count?.products ?? 0} {c._count?.products === 1 ? ro.common.product : ro.common.products}
                       </div>
                       <div className="flex flex-wrap gap-1.5 mt-2">
                         {getCategoryAttributes(c).map((a) => (
@@ -246,7 +245,7 @@ function CategoriesPage() {
                           setIsModalOpen(true);
                         }}
                       >
-                        Edit
+                        {ro.common.edit}
                       </Button>
                       <Button
                         type="button"
@@ -279,7 +278,7 @@ function CategoriesPage() {
           <DialogContent className="sm:max-w-[425px] w-[95vw] border-border/60">
             <DialogHeader>
               <DialogTitle className="text-lg font-semibold tracking-tight">
-                {editingId ? "Edit category" : "Create category"}
+                {editingId ? ro.categories.editCategory : ro.categories.createCategory}
               </DialogTitle>
             </DialogHeader>
             
@@ -291,9 +290,9 @@ function CategoriesPage() {
                   name="name"
                   render={({ field }) => (
                     <FormItem className="grid gap-1">
-                      <FormLabel className="text-[13px] font-medium">Name</FormLabel>
+                      <FormLabel className="text-[13px] font-medium">{ro.categories.nameLabel}</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Accesorii" className="h-11" {...field} />
+                        <Input placeholder={ro.categories.namePlaceholder} className="h-11" {...field} />
                       </FormControl>
                       <FormMessage className="text-xs" />
                     </FormItem>
@@ -304,10 +303,10 @@ function CategoriesPage() {
 
                 {/* Custom Attributes (Showcase only) */}
                 <div className="grid gap-2">
-                  <Label className="text-[13px] font-medium">Expected attributes</Label>
+                  <Label className="text-[13px] font-medium">{ro.categories.expectedAttrs}</Label>
                   <div className="flex flex-wrap gap-1.5 min-h-[24px]">
                     {attrs.length === 0 ? (
-                      <span className="text-xs text-muted-foreground/60 italic">No attributes added</span>
+                      <span className="text-xs text-muted-foreground/60 italic">{ro.categories.noAttrs}</span>
                     ) : (
                       attrs.map((a) => (
                         <Badge key={a} variant="outline" className="gap-1.5 py-0.5 pr-1.5">
@@ -327,7 +326,7 @@ function CategoriesPage() {
                     <Input
                       value={draft}
                       onChange={(e) => setDraft(e.target.value)}
-                      placeholder="Attribute name"
+                      placeholder={ro.categories.attrPlaceholder}
                       className="h-10"
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
@@ -364,7 +363,7 @@ function CategoriesPage() {
                     className="h-11 flex-1"
                     onClick={handleCancelEdit}
                   >
-                    Cancel
+                    {ro.common.cancel}
                   </Button>
                   <Button
                     type="submit"
@@ -374,12 +373,12 @@ function CategoriesPage() {
                     {isSubmitting || updateMutation.isPending || mutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving…
+                        {ro.common.saving}
                       </>
                     ) : editingId ? (
-                      "Save changes"
+                      ro.common.saveChanges
                     ) : (
-                      "Create category"
+                      ro.categories.createCategory
                     )}
                   </Button>
                 </div>
@@ -399,14 +398,14 @@ function CategoriesPage() {
         >
           <AlertDialogContent className="border-border/60">
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogTitle>{ro.categories.confirmTitle}</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the category and remove its attribute schema. Ensure no products are currently linked to it.
+                {ro.categories.confirmDesc}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={deleteMutation.isPending}>
-                Cancel
+                {ro.common.cancel}
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => {
@@ -417,7 +416,7 @@ function CategoriesPage() {
                 disabled={deleteMutation.isPending}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                {deleteMutation.isPending ? "Deleting..." : "Delete category"}
+                {deleteMutation.isPending ? ro.common.deleting : ro.categories.deleteBtn}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

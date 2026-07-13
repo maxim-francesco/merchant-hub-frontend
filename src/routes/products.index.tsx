@@ -6,6 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { normalizePriceInput } from "@/lib/price";
+import { ro } from "@/lib/i18n/ro";
+import { getErrorMessage } from "@/lib/i18n/getErrorMessage";
 import {
   Search,
   SlidersHorizontal,
@@ -86,7 +88,7 @@ import {
 import { useTenantStore } from "@/lib/store/tenantStore";
 
 export const Route = createFileRoute("/products/")({
-  head: () => ({ meta: [{ title: "Products — Commerce OS Admin" }] }),
+  head: () => ({ meta: [{ title: ro.products.headTitle }] }),
   component: ProductsPage,
 });
 
@@ -223,7 +225,7 @@ function ProductRow({ product, onEdit, onDelete }: ProductRowProps) {
           <DropdownMenuContent align="end" className="w-44 text-sm border-border/60">
             <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => onEdit(product)}>
               <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-              Edit product
+              {ro.products.editProduct}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -231,7 +233,7 @@ function ProductRow({ product, onEdit, onDelete }: ProductRowProps) {
               onClick={() => onDelete(product)}
             >
               <Trash2 className="h-3.5 w-3.5" />
-              Delete
+              {ro.common.delete}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -242,11 +244,11 @@ function ProductRow({ product, onEdit, onDelete }: ProductRowProps) {
 
 // ─── Form validation ──────────────────────────────────────────────────────────
 const productSchema = z.object({
-  name: z.string().min(2, "Product name must be at least 2 characters."),
+  name: z.string().min(2, ro.validation.productMin),
   price: z.string().refine((val) => normalizePriceInput(val) !== null, {
-    message: "Price must be a positive number with at most 2 decimals (extra decimals are rounded).",
+    message: ro.validation.pricePositive,
   }),
-  categoryId: z.string().min(1, "Please select a category."),
+  categoryId: z.string().min(1, ro.validation.categoryRequired),
   sku: z.string().optional(),
   stock: z.string().optional(),
   description: z.string().optional(),
@@ -330,15 +332,14 @@ function ProductsPage() {
   const createMutation = useMutation({
     mutationFn: createProduct,
     onSuccess: () => {
-      toast.success("Product created successfully");
+      toast.success(ro.products.createdSuccess);
       form.reset();
       setDynamicAttrs({});
       setIsModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (err: any) => {
-      const msg = err.response?.data?.message || "Failed to create product.";
-      toast.error(msg);
+      toast.error(getErrorMessage(err));
     },
   });
 
@@ -346,7 +347,7 @@ function ProductsPage() {
   const updateMutation = useMutation({
     mutationFn: updateProduct,
     onSuccess: () => {
-      toast.success("Product updated successfully");
+      toast.success(ro.products.updatedSuccess);
       form.reset();
       setDynamicAttrs({});
       setEditingId(null);
@@ -354,8 +355,7 @@ function ProductsPage() {
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (err: any) => {
-      const msg = err.response?.data?.message || "Failed to update product.";
-      toast.error(msg);
+      toast.error(getErrorMessage(err));
     },
   });
 
@@ -363,13 +363,12 @@ function ProductsPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteProduct,
     onSuccess: () => {
-      toast.success("Product deleted successfully");
+      toast.success(ro.products.deletedSuccess);
       setProductToDelete(null);
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (err: any) => {
-      const msg = err.response?.data?.message || "Failed to delete product.";
-      toast.error(msg);
+      toast.error(getErrorMessage(err));
       setProductToDelete(null);
     },
   });
@@ -432,10 +431,10 @@ function ProductsPage() {
       setIsUploading(true);
       const data = await uploadProductImage(file);
       onChange(data.url); // Update react-hook-form state
-      toast.success("Image uploaded successfully");
+      toast.success(ro.products.imageSuccess);
     } catch (error) {
       console.error("Failed to upload image:", error);
-      toast.error("Failed to upload image.");
+      toast.error(getErrorMessage(error));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = ""; // Reset input
@@ -483,19 +482,19 @@ function ProductsPage() {
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/40 pb-5">
           <div className="min-w-0">
-            <h1 className="text-2xl font-semibold tracking-tight">Products</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{ro.products.title}</h1>
             <p className="text-sm text-muted-foreground">
-              Manage your catalog and inventory.{" "}
+              {ro.products.subtitle}{" "}
               {products && !isLoading && (
                 <span className="text-muted-foreground/60">
-                  {products.length} item{products.length !== 1 ? "s" : ""}
+                  {products.length} {products.length === 1 ? ro.common.product : ro.common.products}
                 </span>
               )}
             </p>
           </div>
           <Button onClick={handleOpenCreate} className="shrink-0 gap-1.5 self-start sm:self-center">
             <Plus className="h-4 w-4" />
-            Create Product
+            {ro.products.createBtn}
           </Button>
         </div>
 
@@ -504,13 +503,13 @@ function ProductsPage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
             <Input
-              placeholder="Search products…"
+              placeholder={ro.products.searchPlaceholder}
               className="pl-9 h-10 bg-background border-border/70 focus-visible:ring-1"
             />
           </div>
           <Button variant="outline" className="h-10 gap-2 text-sm">
             <SlidersHorizontal className="h-4 w-4" />
-            Filters
+            {ro.products.filters}
           </Button>
         </div>
 
@@ -521,7 +520,7 @@ function ProductsPage() {
             className="flex items-start gap-2.5 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive"
           >
             <AlertCircle className="h-4 w-4 mt-px shrink-0" />
-            <span>Failed to load products: {(error as Error)?.message ?? "Unknown error"}</span>
+            <span>{getErrorMessage(error)}</span>
           </div>
         )}
 
@@ -533,16 +532,16 @@ function ProductsPage() {
                 <TableHeader>
                   <TableRow className="border-b border-border/60 bg-muted/20 hover:bg-muted/20">
                     <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground pl-5 py-3">
-                      Product
+                      {ro.products.tableProduct}
                     </TableHead>
                     <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3">
-                      Category
+                      {ro.products.tableCategory}
                     </TableHead>
                     <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 text-right pr-5">
-                      Price (RON)
+                      {ro.products.tablePrice}
                     </TableHead>
                     <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3">
-                      Attributes
+                      {ro.products.tableAttrs}
                     </TableHead>
                     <TableHead className="py-3 pr-4 w-10" />
                   </TableRow>
@@ -564,9 +563,9 @@ function ProductsPage() {
                     <TableRow className="hover:bg-transparent">
                       <TableCell colSpan={5} className="py-16 text-center text-muted-foreground">
                         <Package className="h-8 w-8 mx-auto mb-3 opacity-30" />
-                        <p className="text-sm font-medium">No products found</p>
+                        <p className="text-sm font-medium">{ro.products.noProducts}</p>
                         <p className="text-xs mt-1 opacity-70">
-                          Add your first product to get started.
+                          {ro.products.noProductsDesc}
                         </p>
                       </TableCell>
                     </TableRow>
@@ -582,7 +581,7 @@ function ProductsPage() {
           <DialogContent onInteractOutside={(e) => e.preventDefault()} className="sm:max-w-[480px] w-[95vw] max-h-[85vh] overflow-y-auto border-border/60">
             <DialogHeader>
               <DialogTitle className="text-lg font-semibold tracking-tight">
-                {editingId ? "Edit product" : "Create product"}
+                {editingId ? ro.products.editProduct : ro.products.createProduct}
               </DialogTitle>
             </DialogHeader>
 
@@ -594,9 +593,9 @@ function ProductsPage() {
                   name="name"
                   render={({ field }) => (
                     <FormItem className="grid gap-1">
-                      <FormLabel className="text-[13px] font-medium">Name</FormLabel>
+                      <FormLabel className="text-[13px] font-medium">{ro.products.nameLabel}</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Silk Shirt" className="h-11" {...field} />
+                        <Input placeholder={ro.products.namePlaceholder} className="h-11" {...field} />
                       </FormControl>
                       <FormMessage className="text-xs" />
                     </FormItem>
@@ -609,10 +608,10 @@ function ProductsPage() {
                   name="price"
                   render={({ field }) => (
                     <FormItem className="grid gap-1">
-                      <FormLabel className="text-[13px] font-medium">Price (RON)</FormLabel>
+                      <FormLabel className="text-[13px] font-medium">{ro.products.priceLabel}</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="199.99"
+                          placeholder={ro.products.pricePlaceholder}
                           className="h-11"
                           inputMode="decimal"
                           {...field}
@@ -636,9 +635,9 @@ function ProductsPage() {
                   name="stock"
                   render={({ field }) => (
                     <FormItem className="grid gap-1">
-                      <FormLabel className="text-[13px] font-medium">Stock Quantity</FormLabel>
+                      <FormLabel className="text-[13px] font-medium">{ro.products.stockLabel}</FormLabel>
                       <FormControl>
-                        <Input placeholder="100" type="number" className="h-11" {...field} />
+                        <Input placeholder={ro.products.stockPlaceholder} type="number" className="h-11" {...field} />
                       </FormControl>
                       <FormMessage className="text-xs" />
                     </FormItem>
@@ -651,9 +650,9 @@ function ProductsPage() {
                   name="description"
                   render={({ field }) => (
                     <FormItem className="grid gap-1">
-                      <FormLabel className="text-[13px] font-medium">Description</FormLabel>
+                      <FormLabel className="text-[13px] font-medium">{ro.products.descLabel}</FormLabel>
                       <FormControl>
-                        <Input placeholder="Product description details..." className="h-11" {...field} />
+                        <Input placeholder={ro.products.descPlaceholder} className="h-11" {...field} />
                       </FormControl>
                       <FormMessage className="text-xs" />
                     </FormItem>
@@ -723,11 +722,11 @@ function ProductsPage() {
                   name="categoryId"
                   render={({ field }) => (
                     <FormItem className="grid gap-1">
-                      <FormLabel className="text-[13px] font-medium">Category</FormLabel>
+                      <FormLabel className="text-[13px] font-medium">{ro.products.categoryLabel}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value} {...({ modal: false } as any)}>
                         <FormControl>
                           <SelectTrigger className="h-11 border-border/70">
-                            <SelectValue placeholder="Select a category" />
+                            <SelectValue placeholder={ro.products.selectCategory} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent position="popper" className="z-[100] pointer-events-auto max-h-[300px] overflow-y-auto border-border/60">
@@ -747,7 +746,7 @@ function ProductsPage() {
                 {expectedAttrs.length > 0 && (
                   <div className="flex flex-col gap-3.5 border-t border-border/40 pt-4 mt-1">
                     <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Category Specifications
+                      {ro.products.specifications}
                     </Label>
                     <div className="grid gap-3">
                       {expectedAttrs.map((attr) => (
@@ -761,7 +760,7 @@ function ProductsPage() {
                                 [attr]: e.target.value,
                               }));
                             }}
-                            placeholder={`Enter ${attr.toLowerCase()}`}
+                            placeholder={`${ro.products.specPlaceholder}${attr.toLowerCase()}`}
                             className="h-11 border-border/70"
                           />
                         </div>
@@ -778,7 +777,7 @@ function ProductsPage() {
                     className="h-11 flex-1"
                     onClick={handleCancel}
                   >
-                    Cancel
+                    {ro.common.cancel}
                   </Button>
                   <Button
                     type="submit"
@@ -788,12 +787,12 @@ function ProductsPage() {
                     {isSubmitting || updateMutation.isPending || createMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving…
+                        {ro.common.saving}
                       </>
                     ) : editingId ? (
-                      "Save changes"
+                      ro.common.saveChanges
                     ) : (
-                      "Create product"
+                      ro.products.createProduct
                     )}
                   </Button>
                 </div>
@@ -809,14 +808,14 @@ function ProductsPage() {
         >
           <AlertDialogContent className="border-border/60">
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogTitle>{ro.products.confirmTitle}</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the product "{productToDelete?.name}" and remove it from the store catalog.
+                {ro.products.confirmDesc.replace("{name}", productToDelete?.name || "")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={deleteMutation.isPending}>
-                Cancel
+                {ro.common.cancel}
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => {
@@ -827,7 +826,7 @@ function ProductsPage() {
                 disabled={deleteMutation.isPending}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                {deleteMutation.isPending ? "Deleting..." : "Delete product"}
+                {deleteMutation.isPending ? ro.common.deleting : ro.products.deleteBtn}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

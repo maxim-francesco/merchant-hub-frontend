@@ -80,7 +80,7 @@ export interface ResolvedTenant {
   id: string;
   name: string;
   slug: string;
-  settings: any;
+  settings?: any;
 }
 
 interface ResolveResponseEnvelope {

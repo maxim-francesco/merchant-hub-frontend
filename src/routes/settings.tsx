@@ -11,9 +11,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Loader2, Settings2, Globe, Shield, Wallet, AlertCircle } from "lucide-react";
 import { fetchCurrentTenant, updateTenant } from "@/lib/api/tenant";
+import { ro } from "@/lib/i18n/ro";
+import { getErrorMessage } from "@/lib/i18n/getErrorMessage";
 
 export const Route = createFileRoute("/settings")({
-  head: () => ({ meta: [{ title: "Settings — Commerce OS Admin" }] }),
+  head: () => ({ meta: [{ title: ro.settings.headTitle }] }),
   component: SettingsPage,
 });
 
@@ -49,11 +51,11 @@ function SettingsPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error("Store name is required.");
+      toast.error(ro.validation.storeNameRequired);
       return;
     }
     if (!slug.trim()) {
-      toast.error("Subdomain slug is required.");
+      toast.error(ro.validation.storeSlugRequired);
       return;
     }
 
@@ -72,10 +74,9 @@ function SettingsPage() {
 
       // Refetch
       await queryClient.invalidateQueries({ queryKey: ["tenant"] });
-      toast.success("Store configurations updated successfully.");
+      toast.success(ro.settings.updatedSuccess);
     } catch (err: any) {
-      const message = err.response?.data?.message || err.message || "Failed to update configurations.";
-      toast.error(message);
+      toast.error(getErrorMessage(err));
     } finally {
       setIsSaving(false);
     }
@@ -86,8 +87,8 @@ function SettingsPage() {
       <div className="flex flex-col gap-6 max-w-4xl">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-          <p className="text-sm text-muted-foreground">Configure your store settings, billing preferences, and integrations.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{ro.settings.title}</h1>
+          <p className="text-sm text-muted-foreground">{ro.settings.subtitle}</p>
         </div>
 
         {isError && (
@@ -96,7 +97,7 @@ function SettingsPage() {
             className="flex items-start gap-2.5 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive"
           >
             <AlertCircle className="h-4.5 w-4.5 mt-0.5 shrink-0" />
-            <span>Failed to load settings: {(error as Error)?.message || "Unknown error"}</span>
+            <span>{getErrorMessage(error)}</span>
           </div>
         )}
 
@@ -119,30 +120,30 @@ function SettingsPage() {
                   <Globe className="h-4 w-4" />
                 </div>
                 <div>
-                  <CardTitle className="text-sm font-semibold tracking-wide uppercase text-muted-foreground/80">General Profile</CardTitle>
-                  <CardDescription className="text-xs">Manage your brand identity and public url.</CardDescription>
+                  <CardTitle className="text-sm font-semibold tracking-wide uppercase text-muted-foreground/80">{ro.settings.profileTitle}</CardTitle>
+                  <CardDescription className="text-xs">{ro.settings.profileDesc}</CardDescription>
                 </div>
               </CardHeader>
               <CardContent className="grid gap-4 pt-5">
                 <div className="grid gap-2">
-                  <Label htmlFor="store-name" className="text-xs font-semibold text-muted-foreground">Store Name</Label>
+                  <Label htmlFor="store-name" className="text-xs font-semibold text-muted-foreground">{ro.settings.storeName}</Label>
                   <Input
                     id="store-name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Luxe Fashion"
+                    placeholder={ro.settings.storeNamePlaceholder}
                     className="h-11 border-border/70 text-sm"
                     required
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="store-slug" className="text-xs font-semibold text-muted-foreground">Store Slug (Subdomain)</Label>
+                  <Label htmlFor="store-slug" className="text-xs font-semibold text-muted-foreground">{ro.settings.storeSlug}</Label>
                   <div className="flex">
                     <Input
                       id="store-slug"
                       value={slug}
                       onChange={(e) => setSlug(e.target.value)}
-                      placeholder="e.g. luxe-fashion"
+                      placeholder={ro.settings.storeSlugPlaceholder}
                       className="h-11 border-border/70 text-sm rounded-r-none font-mono"
                       required
                     />
@@ -161,17 +162,17 @@ function SettingsPage() {
                   <Shield className="h-4 w-4" />
                 </div>
                 <div>
-                  <CardTitle className="text-sm font-semibold tracking-wide uppercase text-muted-foreground/80">Business Configuration</CardTitle>
-                  <CardDescription className="text-xs">Adjust checkout models and invoicing features.</CardDescription>
+                  <CardTitle className="text-sm font-semibold tracking-wide uppercase text-muted-foreground/80">{ro.settings.configTitle}</CardTitle>
+                  <CardDescription className="text-xs">{ro.settings.configDesc}</CardDescription>
                 </div>
               </CardHeader>
               <CardContent className="divide-y divide-border/50 pt-1">
                 {/* B2C Switch */}
                 <div className="flex items-center justify-between py-4">
                   <div className="flex flex-col gap-0.5">
-                    <Label htmlFor="enable-b2c" className="text-sm font-semibold text-foreground">Enable B2C Billing</Label>
+                    <Label htmlFor="enable-b2c" className="text-sm font-semibold text-foreground">{ro.settings.enableB2C}</Label>
                     <span className="text-xs text-muted-foreground max-w-lg">
-                      Enable standard retail invoice generation for individual customers at checkout.
+                      {ro.settings.enableB2CDesc}
                     </span>
                   </div>
                   <Switch
@@ -184,9 +185,9 @@ function SettingsPage() {
                 {/* B2B Switch */}
                 <div className="flex items-center justify-between py-4">
                   <div className="flex flex-col gap-0.5">
-                    <Label htmlFor="enable-b2b" className="text-sm font-semibold text-foreground">Enable B2B Billing</Label>
+                    <Label htmlFor="enable-b2b" className="text-sm font-semibold text-foreground">{ro.settings.enableB2B}</Label>
                     <span className="text-xs text-muted-foreground max-w-lg">
-                      Allow corporate clients to enter VAT details and company registration info at checkout.
+                      {ro.settings.enableB2BDesc}
                     </span>
                   </div>
                   <Switch
@@ -205,23 +206,23 @@ function SettingsPage() {
                   <Wallet className="h-4 w-4" />
                 </div>
                 <div>
-                  <CardTitle className="text-sm font-semibold tracking-wide uppercase text-muted-foreground/80">Payment Integration</CardTitle>
-                  <CardDescription className="text-xs">Configure third-party payment gateway credentials.</CardDescription>
+                  <CardTitle className="text-sm font-semibold tracking-wide uppercase text-muted-foreground/80">{ro.settings.stripeTitle}</CardTitle>
+                  <CardDescription className="text-xs">{ro.settings.stripeDesc}</CardDescription>
                 </div>
               </CardHeader>
               <CardContent className="grid gap-4 pt-5">
                 <div className="grid gap-2">
-                  <Label htmlFor="stripe-key" className="text-xs font-semibold text-muted-foreground">Payment Gateway API Key (Stripe)</Label>
+                  <Label htmlFor="stripe-key" className="text-xs font-semibold text-muted-foreground">{ro.settings.stripeKey}</Label>
                   <Input
                     id="stripe-key"
                     type="password"
                     value={stripeKey}
                     onChange={(e) => setStripeKey(e.target.value)}
-                    placeholder="pk_test_••••••••••••••••••••••••"
+                    placeholder={ro.settings.stripePlaceholder}
                     className="h-11 border-border/70 font-mono text-sm"
                   />
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    Your key is stored securely. Do not share live keys in test environments.
+                    {ro.settings.stripeNote}
                   </p>
                 </div>
               </CardContent>
@@ -233,10 +234,10 @@ function SettingsPage() {
                 {isSaving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving Changes...
+                    {ro.settings.saving}
                   </>
                 ) : (
-                  "Save Changes"
+                  ro.common.saveChanges
                 )}
               </Button>
             </div>

@@ -46,14 +46,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Users, UserPlus, Trash2, Mail, ShieldAlert, AlertCircle, Loader2 } from "lucide-react";
 import { fetchTeamMembers, inviteTeamMember, removeTeamMember, type TenantMember } from "@/lib/api/team";
+import { ro } from "@/lib/i18n/ro";
+import { getErrorMessage } from "@/lib/i18n/getErrorMessage";
 
 export const Route = createFileRoute("/team")({
-  head: () => ({ meta: [{ title: "Team Management — Commerce OS Admin" }] }),
+  head: () => ({ meta: [{ title: ro.team.headTitle }] }),
   component: TeamPage,
 });
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
+  return new Date(dateStr).toLocaleDateString("ro-RO", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -100,7 +102,7 @@ function TeamPage() {
   const handleInviteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim()) {
-      toast.error("Please enter a valid email address.");
+      toast.error(ro.validation.inviteEmailRequired);
       return;
     }
 
@@ -111,7 +113,7 @@ function TeamPage() {
         role: inviteRole,
       });
 
-      toast.success("Team member invited successfully!");
+      toast.success(ro.team.inviteSuccess);
       // Invalidate cache to refetch members list
       await queryClient.invalidateQueries({ queryKey: ["team-members"] });
       
@@ -120,8 +122,7 @@ function TeamPage() {
       setInviteRole("STAFF");
       setIsInviteOpen(false);
     } catch (err: any) {
-      const message = err.response?.data?.message || err.message || "Failed to invite team member.";
-      toast.error(message);
+      toast.error(getErrorMessage(err));
     } finally {
       setIsInviting(false);
     }
@@ -133,12 +134,11 @@ function TeamPage() {
     setIsRemoving(true);
     try {
       await removeTeamMember(memberToDelete.id);
-      toast.success(`Removed ${memberToDelete.user.email} successfully.`);
+      toast.success(ro.team.removeSuccess);
       await queryClient.invalidateQueries({ queryKey: ["team-members"] });
       setMemberToDelete(null);
     } catch (err: any) {
-      const message = err.response?.data?.message || err.message || "Failed to remove team member.";
-      toast.error(message);
+      toast.error(getErrorMessage(err));
     } finally {
       setIsRemoving(false);
     }
@@ -150,8 +150,8 @@ function TeamPage() {
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Team Management</h1>
-            <p className="text-sm text-muted-foreground">Manage your workspace access, roles, and collaborator permissions.</p>
+            <h1 className="text-2xl font-semibold tracking-tight">{ro.team.title}</h1>
+            <p className="text-sm text-muted-foreground">{ro.team.subtitle}</p>
           </div>
           
           {/* Invite Dialog */}
@@ -159,27 +159,27 @@ function TeamPage() {
             <DialogTrigger asChild>
               <Button className="h-10 px-4 font-medium flex items-center gap-2">
                 <UserPlus className="h-4 w-4" />
-                Invite Member
+                {ro.team.inviteBtn}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <form onSubmit={handleInviteSubmit}>
                 <DialogHeader className="gap-1">
-                  <DialogTitle className="text-lg">Invite Workspace Member</DialogTitle>
+                  <DialogTitle className="text-lg">{ro.team.inviteTitle}</DialogTitle>
                   <DialogDescription className="text-xs">
-                    Enter the collaborator's email and choose a role. If the user doesn't exist, they will be registered with a temporary password.
+                    {ro.team.inviteDesc}
                   </DialogDescription>
                 </DialogHeader>
                 
                 <div className="grid gap-4 py-5">
                   <div className="grid gap-2">
-                    <Label htmlFor="email" className="text-xs font-semibold text-muted-foreground">Email Address</Label>
+                    <Label htmlFor="email" className="text-xs font-semibold text-muted-foreground">{ro.team.emailLabel}</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
                       <Input
                         id="email"
                         type="email"
-                        placeholder="collaborator@company.com"
+                        placeholder={ro.team.emailPlaceholder}
                         className="pl-9 h-11 border-border/70 text-sm"
                         value={inviteEmail}
                         onChange={(e) => setInviteEmail(e.target.value)}
@@ -190,26 +190,26 @@ function TeamPage() {
                   </div>
                   
                   <div className="grid gap-2">
-                    <Label htmlFor="role" className="text-xs font-semibold text-muted-foreground">Workspace Role</Label>
+                    <Label htmlFor="role" className="text-xs font-semibold text-muted-foreground">{ro.team.roleLabel}</Label>
                     <Select
                       value={inviteRole}
                       onValueChange={(val: "ADMIN" | "STAFF") => setInviteRole(val)}
                       disabled={isInviting}
                     >
                       <SelectTrigger className="h-11 border-border/70 text-sm">
-                        <SelectValue placeholder="Select a role" />
+                        <SelectValue placeholder={ro.team.selectRole} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="STAFF" className="text-xs py-2.5">
                           <div>
-                            <span className="font-semibold block">Staff</span>
-                            <span className="text-[10px] text-muted-foreground block mt-0.5">Read and write catalogs/orders. No admin settings.</span>
+                            <span className="font-semibold block">{ro.team.roleStaff}</span>
+                            <span className="text-[10px] text-muted-foreground block mt-0.5">{ro.team.roleStaffDesc}</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="ADMIN" className="text-xs py-2.5">
                           <div>
-                            <span className="font-semibold block">Admin</span>
-                            <span className="text-[10px] text-muted-foreground block mt-0.5">Full setting control, workspace updates, billing features.</span>
+                            <span className="font-semibold block">{ro.team.roleAdmin}</span>
+                            <span className="text-[10px] text-muted-foreground block mt-0.5">{ro.team.roleAdminDesc}</span>
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -225,7 +225,7 @@ function TeamPage() {
                     disabled={isInviting}
                     className="h-11"
                   >
-                    Cancel
+                    {ro.common.cancel}
                   </Button>
                   <Button
                     type="submit"
@@ -235,10 +235,10 @@ function TeamPage() {
                     {isInviting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Inviting...
+                        {ro.team.inviting}
                       </>
                     ) : (
-                      "Send Invitation"
+                      ro.team.sendInvitation
                     )}
                   </Button>
                 </DialogFooter>
@@ -254,7 +254,7 @@ function TeamPage() {
             className="flex items-start gap-2.5 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive"
           >
             <AlertCircle className="h-4.5 w-4.5 mt-0.5 shrink-0" />
-            <span>Failed to load team members: {(error as Error)?.message || "Unknown error"}</span>
+            <span>{getErrorMessage(error)}</span>
           </div>
         )}
 
@@ -265,10 +265,10 @@ function TeamPage() {
               <Table>
                 <TableHeader className="bg-muted/10 border-b border-border/40">
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="pl-6 h-12 text-xs font-semibold tracking-wider text-muted-foreground/80 uppercase">Member</TableHead>
-                    <TableHead className="h-12 text-xs font-semibold tracking-wider text-muted-foreground/80 uppercase">Role</TableHead>
-                    <TableHead className="h-12 text-xs font-semibold tracking-wider text-muted-foreground/80 uppercase">Joined Date</TableHead>
-                    <TableHead className="pr-6 h-12 text-right text-xs font-semibold tracking-wider text-muted-foreground/80 uppercase">Actions</TableHead>
+                    <TableHead className="pl-6 h-12 text-xs font-semibold tracking-wider text-muted-foreground/80 uppercase">{ro.team.tableMember}</TableHead>
+                    <TableHead className="h-12 text-xs font-semibold tracking-wider text-muted-foreground/80 uppercase">{ro.team.tableRole}</TableHead>
+                    <TableHead className="h-12 text-xs font-semibold tracking-wider text-muted-foreground/80 uppercase">{ro.team.tableJoined}</TableHead>
+                    <TableHead className="pr-6 h-12 text-right text-xs font-semibold tracking-wider text-muted-foreground/80 uppercase">{ro.team.tableActions}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -292,7 +292,7 @@ function TeamPage() {
                   ) : members.length === 0 ? (
                     <TableRow className="hover:bg-transparent">
                       <TableCell colSpan={4} className="h-32 text-center text-sm text-muted-foreground">
-                        No team members found.
+                        {ro.team.noMembers}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -309,7 +309,7 @@ function TeamPage() {
                             <div className="flex flex-col min-w-0">
                               <span className="text-sm font-medium text-foreground truncate">{member.user.email}</span>
                               <span className="text-[10px] text-muted-foreground font-mono mt-0.5">
-                                User Type: {member.user.globalRole}
+                                {ro.team.userType}: {member.user.globalRole}
                               </span>
                             </div>
                           </div>
@@ -321,7 +321,7 @@ function TeamPage() {
                             variant="outline"
                             className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${getRoleBadgeStyle(member.role)}`}
                           >
-                            {member.role}
+                            {ro.roles[member.role] ?? member.role}
                           </Badge>
                         </TableCell>
                         
@@ -338,7 +338,7 @@ function TeamPage() {
                               size="icon"
                               className="h-8 w-8 text-muted-foreground/30 cursor-not-allowed"
                               disabled
-                              title="The owner of the workspace cannot be removed"
+                              title={ro.team.ownerRemoveAlert}
                             >
                               <ShieldAlert className="h-4 w-4" />
                             </Button>
@@ -367,13 +367,13 @@ function TeamPage() {
       <AlertDialog open={!!memberToDelete} onOpenChange={(open) => !open && setMemberToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-base font-semibold">Remove Team Member?</AlertDialogTitle>
+            <AlertDialogTitle className="text-base font-semibold">{ro.team.removeTitle}</AlertDialogTitle>
             <AlertDialogDescription className="text-sm">
-              Are you sure you want to remove <strong>{memberToDelete?.user.email}</strong> from this workspace? They will immediately lose all dashboard privileges and settings controls.
+              {ro.team.removeDesc.replace("{email}", memberToDelete?.user.email || "")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isRemoving}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isRemoving}>{ro.common.cancel}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive hover:bg-destructive/90 text-white font-medium h-10 px-4"
               onClick={(e) => {
@@ -385,10 +385,10 @@ function TeamPage() {
               {isRemoving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Removing...
+                  {ro.team.removing}
                 </>
               ) : (
-                "Yes, Remove Member"
+                ro.team.removeConfirmBtn
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
