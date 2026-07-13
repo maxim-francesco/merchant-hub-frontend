@@ -174,7 +174,9 @@ export const ro = {
     cui: "CUI",
     regCom: "Reg. Com.",
     contact: "Contact",
-    shippingAddress: "Adresă de livrare"
+    shippingAddress: "Adresă de livrare",
+    statusUpdated: "Statusul comenzii a fost actualizat.",
+    comingSoon: "În curând"
   },
   team: {
     headTitle: "Gestionare echipă — Commerce OS Admin",
@@ -245,6 +247,8 @@ export const ro = {
     notFoundTitle: "Magazinul nu a fost găsit",
     notFoundDesc: "Nu am putut găsi magazinul cu adresa <strong>„{slug}”</strong>. Te rugăm să verifici URL-ul sau să contactezi asistența.",
     goToAdmin: "Mergi la panoul de administrare",
+    b2cLabel: "Persoană fizică",
+    b2bLabel: "Firmă",
     posLabel: "Storefront POS",
     cartLabel: "Coș",
     cartTitle: "Coșul tău",
@@ -334,6 +338,7 @@ export const ro = {
     inviteEmailRequired: "Te rugăm să introduci o adresă de email validă.",
     inviteRoleRequired: "Te rugăm să selectezi un rol.",
     checkoutDetailsRequired: "Te rugăm să completezi numele și adresa de email.",
+    b2bFieldsRequired: "Pentru firmă, numele companiei și CUI-ul sunt obligatorii.",
     cartEmpty: "Coșul tău este gol."
   }
 } as const;

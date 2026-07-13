@@ -32,6 +32,10 @@ export interface CheckoutPayload {
   customerName: string;
   customerEmail: string;
   items: CheckoutItem[];
+  customerType?: "B2C" | "B2B";
+  companyName?: string;
+  cui?: string;
+  regCom?: string;
 }
 
 interface ProductsEnvelope {

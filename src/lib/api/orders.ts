@@ -30,6 +30,10 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
+  customerType: "B2C" | "B2B";
+  companyName: string | null;
+  cui: string | null;
+  regCom: string | null;
 }
 
 interface OrdersResponseEnvelope {
@@ -73,3 +77,29 @@ export async function downloadOrderInvoice(orderId: string): Promise<void> {
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
 }
+
+/**
+ * Fetch a single order by ID.
+ */
+export async function fetchOrderById(id: string): Promise<Order> {
+  const { data: envelope } = await apiClient.get<{
+    status: string;
+    data: { order: Order };
+  }>(`/orders/${id}`);
+  return envelope.data.order;
+}
+
+/**
+ * Update the status of a single order by ID.
+ */
+export async function updateOrderStatus(
+  id: string,
+  status: Order["status"]
+): Promise<Order> {
+  const { data: envelope } = await apiClient.patch<{
+    status: string;
+    data: { order: Order };
+  }>(`/orders/${id}/status`, { status });
+  return envelope.data.order;
+}
+

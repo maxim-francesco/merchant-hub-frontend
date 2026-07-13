@@ -76,6 +76,10 @@ function StorefrontPage() {
   // Checkout states
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
+  const [customerType, setCustomerType] = useState<"B2C" | "B2B">("B2C");
+  const [companyName, setCompanyName] = useState("");
+  const [cui, setCui] = useState("");
+  const [regCom, setRegCom] = useState("");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
@@ -171,6 +175,10 @@ function StorefrontPage() {
       toast.error(ro.validation.checkoutDetailsRequired);
       return;
     }
+    if (customerType === "B2B" && (!companyName.trim() || !cui.trim())) {
+      toast.error(ro.validation.b2bFieldsRequired);
+      return;
+    }
     if (cart.length === 0) {
       toast.error(ro.validation.cartEmpty);
       return;
@@ -187,6 +195,12 @@ function StorefrontPage() {
         customerName: customerName.trim(),
         customerEmail: customerEmail.trim(),
         items: itemsPayload,
+        customerType,
+        ...(customerType === "B2B" ? {
+          companyName: companyName.trim(),
+          cui: cui.trim(),
+          regCom: regCom.trim() || undefined,
+        } : {}),
       });
 
       toast.success(ro.storefront.redirectingPayment);
@@ -352,6 +366,37 @@ function StorefrontPage() {
                 </div>
 
                 <form onSubmit={handleCheckout} className="space-y-3">
+                  {/* Tip Client Segmented Control */}
+                  <div className="grid gap-1.5">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                      Tip Client
+                    </Label>
+                    <div className="grid grid-cols-2 gap-2 bg-stone-155/60 bg-stone-100 p-1 rounded-xl">
+                      <button
+                        type="button"
+                        onClick={() => setCustomerType("B2C")}
+                        className={`h-8 rounded-lg text-xs font-semibold transition-all ${
+                          customerType === "B2C"
+                            ? "bg-white text-stone-900 shadow-sm"
+                            : "text-stone-500 hover:text-stone-900"
+                        }`}
+                      >
+                        {ro.storefront.b2cLabel}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCustomerType("B2B")}
+                        className={`h-8 rounded-lg text-xs font-semibold transition-all ${
+                          customerType === "B2B"
+                            ? "bg-white text-stone-900 shadow-sm"
+                            : "text-stone-500 hover:text-stone-900"
+                        }`}
+                      >
+                        {ro.storefront.b2bLabel}
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="grid gap-1">
                     <Label htmlFor="cust-name" className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
                       {ro.storefront.custName}
@@ -379,6 +424,51 @@ function StorefrontPage() {
                       required
                     />
                   </div>
+
+                  {customerType === "B2B" && (
+                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200 border-t border-stone-100 pt-3">
+                      <div className="grid gap-1">
+                        <Label htmlFor="company-name" className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                          {ro.orders.company}
+                        </Label>
+                        <Input
+                          id="company-name"
+                          value={companyName}
+                          onChange={(e) => setCompanyName(e.target.value)}
+                          placeholder="ex. Companie SRL"
+                          className="h-10 border-stone-200 text-xs bg-stone-50/30"
+                          required
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="grid gap-1">
+                          <Label htmlFor="company-cui" className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                            {ro.orders.cui}
+                          </Label>
+                          <Input
+                            id="company-cui"
+                            value={cui}
+                            onChange={(e) => setCui(e.target.value)}
+                            placeholder="ex. RO12345678"
+                            className="h-10 border-stone-200 text-xs bg-stone-50/30"
+                            required
+                          />
+                        </div>
+                        <div className="grid gap-1">
+                          <Label htmlFor="company-reg" className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                            {ro.orders.regCom}
+                          </Label>
+                          <Input
+                            id="company-reg"
+                            value={regCom}
+                            onChange={(e) => setRegCom(e.target.value)}
+                            placeholder="ex. J40/123/2020"
+                            className="h-10 border-stone-200 text-xs bg-stone-50/30"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <Button
                     type="submit"

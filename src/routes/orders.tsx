@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,10 +34,18 @@ import {
   FileText,
   Loader2,
 } from "lucide-react";
-import { fetchOrders, downloadOrderInvoice, type Order } from "@/lib/api/orders";
+import { fetchOrders, downloadOrderInvoice, updateOrderStatus, type Order } from "@/lib/api/orders";
 import { useTenantStore } from "@/lib/store/tenantStore";
 import { ro } from "@/lib/i18n/ro";
 import { getErrorMessage } from "@/lib/i18n/getErrorMessage";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/orders")({
   head: () => ({ meta: [{ title: ro.orders.headTitle }] }),
@@ -100,6 +108,20 @@ function SkeletonRows() {
 function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | null>(null);
+
+  const queryClient = useQueryClient();
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: Order["status"] }) =>
+      updateOrderStatus(id, status),
+    onSuccess: (updatedOrder) => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      setSelectedOrder(updatedOrder);
+      toast.success(ro.orders.statusUpdated);
+    },
+    onError: (err) => {
+      toast.error(getErrorMessage(err));
+    },
+  });
 
   const handleDownloadInvoice = async (orderId: string) => {
     try {
@@ -265,18 +287,38 @@ function OrdersPage() {
           {selectedOrder && (
             <>
               <SheetHeader className="text-left space-y-1.5 border-b border-border/50 pb-5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono bg-muted/60 text-muted-foreground px-2 py-0.5 rounded border border-border/60">
-                    #{selectedOrder.id.slice(0, 8).toUpperCase()}
-                  </span>
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] uppercase font-semibold px-2 py-0.5 border ${
-                      statusBadgeStyles[selectedOrder.status]
-                    }`}
-                  >
-                    {ro.statuses[selectedOrder.status]}
-                  </Badge>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-mono bg-muted/60 text-muted-foreground px-2 py-0.5 rounded border border-border/60">
+                      #{selectedOrder.id.slice(0, 8).toUpperCase()}
+                    </span>
+                    {selectedOrder.customerType === "B2B" && (
+                      <Badge variant="outline" className="text-[10px] uppercase font-semibold px-2 py-0.5 bg-blue-50/50 text-blue-700 border-blue-200">
+                        B2B
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={selectedOrder.status}
+                      onValueChange={(val) => statusMutation.mutate({ id: selectedOrder.id, status: val as Order["status"] })}
+                      disabled={statusMutation.isPending}
+                    >
+                      <SelectTrigger className="w-[140px] h-8 text-[11px] font-semibold">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(["PENDING", "PAID", "SHIPPED", "CANCELLED"] as const).map((s) => (
+                          <SelectItem key={s} value={s} className="text-xs">
+                            {ro.statuses[s]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {statusMutation.isPending && (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                    )}
+                  </div>
                 </div>
                 <SheetTitle className="text-xl font-bold tracking-tight mt-3">{ro.orders.detailsTitle}</SheetTitle>
                 <SheetDescription className="text-xs text-muted-foreground">
@@ -298,6 +340,24 @@ function OrdersPage() {
                     <span className="text-muted-foreground">{ro.orders.custEmail}</span>
                     <span className="font-medium text-foreground truncate max-w-[200px]">{selectedOrder.customerEmail}</span>
                   </div>
+                  {selectedOrder.customerType === "B2B" && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">{ro.orders.company}</span>
+                        <span className="font-medium text-foreground truncate max-w-[200px]">{selectedOrder.companyName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">{ro.orders.cui}</span>
+                        <span className="font-medium text-foreground">{selectedOrder.cui}</span>
+                      </div>
+                      {selectedOrder.regCom && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">{ro.orders.regCom}</span>
+                          <span className="font-medium text-foreground">{selectedOrder.regCom}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{ro.orders.placedAt}</span>
                     <span className="font-medium text-foreground">{formatDate(selectedOrder.createdAt)}</span>
