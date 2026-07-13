@@ -33,7 +33,10 @@ function SettingsPage() {
   const [slug, setSlug] = useState("");
   const [enableB2B, setEnableB2B] = useState(false);
   const [enableB2C, setEnableB2C] = useState(false);
-  const [stripeKey, setStripeKey] = useState("");
+  const [stripeSecretKey, setStripeSecretKey] = useState("");
+  const [stripeWebhookSecret, setStripeWebhookSecret] = useState("");
+  const [deleteSecretKey, setDeleteSecretKey] = useState(false);
+  const [deleteWebhookSecret, setDeleteWebhookSecret] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -44,7 +47,10 @@ function SettingsPage() {
       setSlug(tenant.slug || "");
       setEnableB2B(tenant.settings?.enableB2B ?? false);
       setEnableB2C(tenant.settings?.enableB2C ?? false);
-      setStripeKey(tenant.settings?.paymentGatewayApiKey || "");
+      setStripeSecretKey("");
+      setStripeWebhookSecret("");
+      setDeleteSecretKey(false);
+      setDeleteWebhookSecret(false);
     }
   }, [tenant]);
 
@@ -61,15 +67,27 @@ function SettingsPage() {
 
     setIsSaving(true);
     try {
+      const settingsPayload: Record<string, any> = {
+        enableB2B,
+        enableB2C,
+      };
+
+      if (stripeSecretKey.trim()) {
+        settingsPayload.stripeSecretKey = stripeSecretKey.trim();
+      } else if (deleteSecretKey) {
+        settingsPayload.stripeSecretKey = "";
+      }
+
+      if (stripeWebhookSecret.trim()) {
+        settingsPayload.stripeWebhookSecret = stripeWebhookSecret.trim();
+      } else if (deleteWebhookSecret) {
+        settingsPayload.stripeWebhookSecret = "";
+      }
+
       await updateTenant({
         name: name.trim(),
         slug: slug.trim(),
-        settings: {
-          ...tenant?.settings,
-          enableB2B,
-          enableB2C,
-          paymentGatewayApiKey: stripeKey.trim(),
-        },
+        settings: settingsPayload,
       });
 
       // Refetch
@@ -196,6 +214,19 @@ function SettingsPage() {
                     onCheckedChange={setEnableB2B}
                   />
                 </div>
+
+                {/* Monedă (Fixă RON) */}
+                <div className="flex items-center justify-between py-4">
+                  <div className="flex flex-col gap-0.5">
+                    <Label className="text-sm font-semibold text-foreground">{ro.settings.currencyLabel}</Label>
+                    <span className="text-xs text-muted-foreground max-w-lg">
+                      Toate tranzacțiile și plățile din sistem sunt procesate exclusiv în RON (Lei românești).
+                    </span>
+                  </div>
+                  <span className="font-mono text-sm font-semibold bg-muted px-3 py-1.5 rounded border border-border">
+                    RON
+                  </span>
+                </div>
               </CardContent>
             </Card>
 
@@ -211,18 +242,93 @@ function SettingsPage() {
                 </div>
               </CardHeader>
               <CardContent className="grid gap-4 pt-5">
+                {/* Stripe Secret Key */}
                 <div className="grid gap-2">
-                  <Label htmlFor="stripe-key" className="text-xs font-semibold text-muted-foreground">{ro.settings.stripeKey}</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="stripe-secret-key" className="text-xs font-semibold text-muted-foreground">
+                      {ro.settings.stripeSecretKey}
+                    </Label>
+                    {tenant?.settings?.stripeSecretKeyLast4 && !deleteSecretKey && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-6 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => {
+                          setDeleteSecretKey(true);
+                          setStripeSecretKey("");
+                        }}
+                      >
+                        {ro.settings.stripeDeleteKey}
+                      </Button>
+                    )}
+                  </div>
                   <Input
-                    id="stripe-key"
+                    id="stripe-secret-key"
                     type="password"
-                    value={stripeKey}
-                    onChange={(e) => setStripeKey(e.target.value)}
-                    placeholder={ro.settings.stripePlaceholder}
+                    value={stripeSecretKey}
+                    onChange={(e) => {
+                      setStripeSecretKey(e.target.value);
+                      if (deleteSecretKey) setDeleteSecretKey(false);
+                    }}
+                    placeholder={
+                      tenant?.settings?.stripeSecretKeyLast4 && !deleteSecretKey
+                        ? `•••• ${tenant.settings.stripeSecretKeyLast4}`
+                        : ro.settings.stripeSecretKeyPlaceholder
+                    }
                     className="h-11 border-border/70 font-mono text-sm"
                   />
+                  {deleteSecretKey && (
+                    <p className="text-[11px] text-destructive font-medium">
+                      Cheia va fi ștearsă la salvare.
+                    </p>
+                  )}
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    {ro.settings.stripeNote}
+                    {ro.settings.stripeSecretKeyNote}
+                  </p>
+                </div>
+
+                {/* Stripe Webhook Secret */}
+                <div className="grid gap-2 pt-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="stripe-webhook-secret" className="text-xs font-semibold text-muted-foreground">
+                      {ro.settings.stripeWebhookSecret}
+                    </Label>
+                    {tenant?.settings?.stripeWebhookSecretLast4 && !deleteWebhookSecret && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-6 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => {
+                          setDeleteWebhookSecret(true);
+                          setStripeWebhookSecret("");
+                        }}
+                      >
+                        {ro.settings.stripeDeleteKey}
+                      </Button>
+                    )}
+                  </div>
+                  <Input
+                    id="stripe-webhook-secret"
+                    type="password"
+                    value={stripeWebhookSecret}
+                    onChange={(e) => {
+                      setStripeWebhookSecret(e.target.value);
+                      if (deleteWebhookSecret) setDeleteWebhookSecret(false);
+                    }}
+                    placeholder={
+                      tenant?.settings?.stripeWebhookSecretLast4 && !deleteWebhookSecret
+                        ? `•••• ${tenant.settings.stripeWebhookSecretLast4}`
+                        : ro.settings.stripeWebhookSecretPlaceholder
+                    }
+                    className="h-11 border-border/70 font-mono text-sm"
+                  />
+                  {deleteWebhookSecret && (
+                    <p className="text-[11px] text-destructive font-medium">
+                      Secretul va fi șters la salvare.
+                    </p>
+                  )}
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {ro.settings.stripeWebhookSecretNote}
                   </p>
                 </div>
               </CardContent>

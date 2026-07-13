@@ -10,7 +10,10 @@ export interface TenantSettings {
   billingMode?: "B2B" | "B2C" | "BOTH";
   enableB2B?: boolean;
   enableB2C?: boolean;
-  paymentGatewayApiKey?: string;
+  stripeSecretKey?: string;
+  stripeSecretKeyLast4?: string | null;
+  stripeWebhookSecret?: string;
+  stripeWebhookSecretLast4?: string | null;
   [key: string]: any;
 }
 
