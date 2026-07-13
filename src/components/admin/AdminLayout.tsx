@@ -59,6 +59,7 @@ function NavLinks({ onClick }: { onClick?: () => void }) {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/lib/api/client";
 import { useTenantStore } from "@/lib/store/tenantStore";
+import { getCurrentUser } from "@/lib/api/auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -173,9 +174,35 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   const [dark, setDark] = useState(false);
   const [open, setOpen] = useState(false);
 
+  const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+
+  const { data: currentUser, isLoading: isLoadingUser, isError: isErrorUser } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: getCurrentUser,
+    enabled: !!token,
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!token || isErrorUser) {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("tenant-store");
+      window.location.href = "/login";
+    }
+  }, [token, isErrorUser]);
+
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
+
+  if (!token || isLoadingUser) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -222,9 +249,41 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           <Button variant="ghost" size="icon" aria-label="Notifications">
             <Bell className="h-5 w-5" />
           </Button>
-          <div className="ml-1 grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-            AM
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="relative h-8 w-8 rounded-full ml-1 p-0 focus-visible:ring-0"
+              >
+                <div className="grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-semibold select-none">
+                  {currentUser?.email ? currentUser.email.slice(0, 2).toUpperCase() : "U"}
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 mt-1 font-sans" align="end">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    {ro.common.myAccount}
+                  </p>
+                  <p className="text-xs leading-none text-foreground truncate">
+                    {currentUser?.email || ""}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-xs cursor-pointer text-destructive focus:text-destructive hover:bg-destructive/5"
+                onClick={() => {
+                  localStorage.removeItem("auth_token");
+                  localStorage.removeItem("tenant-store");
+                  window.location.href = "/login";
+                }}
+              >
+                {ro.common.logout}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </header>
 
         <main className="p-3 sm:p-6 max-w-7xl mx-auto">{children}</main>

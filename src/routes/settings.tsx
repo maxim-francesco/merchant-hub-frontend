@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Loader2, Settings2, Globe, Shield, Wallet, AlertCircle } from "lucide-react";
+import { Loader2, Settings2, Globe, Shield, Wallet, AlertCircle, Lock } from "lucide-react";
 import { fetchCurrentTenant, updateTenant } from "@/lib/api/tenant";
 import { ro } from "@/lib/i18n/ro";
 import { getErrorMessage } from "@/lib/i18n/getErrorMessage";
@@ -28,9 +28,7 @@ function SettingsPage() {
     queryFn: fetchCurrentTenant,
   });
 
-  // Local Form state
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
+  // Local Form state — name/slug are NOT editable
   const [enableB2B, setEnableB2B] = useState(false);
   const [enableB2C, setEnableB2C] = useState(false);
   const [stripeSecretKey, setStripeSecretKey] = useState("");
@@ -40,11 +38,9 @@ function SettingsPage() {
 
   const [isSaving, setIsSaving] = useState(false);
 
-  // Sync state once fetched
+  // Sync state once fetched — name/slug excluded (read-only)
   useEffect(() => {
     if (tenant) {
-      setName(tenant.name || "");
-      setSlug(tenant.slug || "");
       setEnableB2B(tenant.settings?.enableB2B ?? false);
       setEnableB2C(tenant.settings?.enableB2C ?? false);
       setStripeSecretKey("");
@@ -56,14 +52,6 @@ function SettingsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
-      toast.error(ro.validation.storeNameRequired);
-      return;
-    }
-    if (!slug.trim()) {
-      toast.error(ro.validation.storeSlugRequired);
-      return;
-    }
 
     setIsSaving(true);
     try {
@@ -84,9 +72,8 @@ function SettingsPage() {
         settingsPayload.stripeWebhookSecret = "";
       }
 
+      // Do NOT send name or slug — they are immutable via API
       await updateTenant({
-        name: name.trim(),
-        slug: slug.trim(),
         settings: settingsPayload,
       });
 
@@ -131,7 +118,7 @@ function SettingsPage() {
           </div>
         ) : (
           <form onSubmit={handleSave} className="grid gap-6">
-            {/* 1. General Profile Card */}
+            {/* 1. General Profile Card — READ-ONLY */}
             <Card className="border-border/60 shadow-sm">
               <CardHeader className="pb-3 border-b border-border/40 flex flex-row items-center gap-3">
                 <div className="grid h-8 w-8 place-items-center rounded-lg border border-border bg-muted/40 text-muted-foreground/80">
@@ -143,29 +130,28 @@ function SettingsPage() {
                 </div>
               </CardHeader>
               <CardContent className="grid gap-4 pt-5">
-                <div className="grid gap-2">
-                  <Label htmlFor="store-name" className="text-xs font-semibold text-muted-foreground">{ro.settings.storeName}</Label>
-                  <Input
-                    id="store-name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder={ro.settings.storeNamePlaceholder}
-                    className="h-11 border-border/70 text-sm"
-                    required
-                  />
+                {/* Read-only hint */}
+                <div className="flex items-center gap-2 rounded-md border border-border/50 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                  <Lock className="h-3.5 w-3.5 shrink-0" />
+                  <span>{ro.settings.readOnlyHint}</span>
                 </div>
+
+                {/* Store Name — display only */}
                 <div className="grid gap-2">
-                  <Label htmlFor="store-slug" className="text-xs font-semibold text-muted-foreground">{ro.settings.storeSlug}</Label>
+                  <Label className="text-xs font-semibold text-muted-foreground">{ro.settings.storeNameLabel}</Label>
+                  <div className="h-11 flex items-center px-3 rounded-md border border-border/50 bg-muted/20 text-sm font-medium text-foreground select-all">
+                    {tenant?.name ?? "—"}
+                  </div>
+                </div>
+
+                {/* Store Slug — display only */}
+                <div className="grid gap-2">
+                  <Label className="text-xs font-semibold text-muted-foreground">{ro.settings.storeSlugLabel}</Label>
                   <div className="flex">
-                    <Input
-                      id="store-slug"
-                      value={slug}
-                      onChange={(e) => setSlug(e.target.value)}
-                      placeholder={ro.settings.storeSlugPlaceholder}
-                      className="h-11 border-border/70 text-sm rounded-r-none font-mono"
-                      required
-                    />
-                    <span className="inline-flex items-center px-4 rounded-r-md border border-l-0 border-border/70 bg-muted/30 text-xs text-muted-foreground font-medium">
+                    <div className="h-11 flex-1 flex items-center px-3 rounded-l-md border border-border/50 bg-muted/20 text-sm font-mono text-foreground select-all">
+                      {tenant?.slug ?? "—"}
+                    </div>
+                    <span className="inline-flex items-center px-4 rounded-r-md border border-l-0 border-border/50 bg-muted/30 text-xs text-muted-foreground font-medium">
                       .commerceos.ro
                     </span>
                   </div>
@@ -353,3 +339,4 @@ function SettingsPage() {
     </AdminLayout>
   );
 }
+

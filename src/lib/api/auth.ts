@@ -53,3 +53,15 @@ export function logout(): void {
 export function isAuthenticated(): boolean {
   return Boolean(localStorage.getItem("auth_token"));
 }
+
+/**
+ * Fetches the currently authenticated user's profile details.
+ */
+export async function getCurrentUser(): Promise<User> {
+  const { data: envelope } = await apiClient.get<{
+    status: string;
+    data: { user: User };
+  }>("/auth/me");
+  return envelope.data.user;
+}
+

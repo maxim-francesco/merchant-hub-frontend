@@ -35,17 +35,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Users, UserPlus, Trash2, Mail, ShieldAlert, AlertCircle, Loader2 } from "lucide-react";
-import { fetchTeamMembers, inviteTeamMember, removeTeamMember, type TenantMember } from "@/lib/api/team";
+import { Users, UserPlus, Trash2, Mail, Eye, EyeOff, ShieldAlert, AlertCircle, Loader2, Lock } from "lucide-react";
+import { fetchTeamMembers, createTeamMember, removeTeamMember, type TenantMember } from "@/lib/api/team";
+import { getCurrentUser } from "@/lib/api/auth";
 import { ro } from "@/lib/i18n/ro";
 import { getErrorMessage } from "@/lib/i18n/getErrorMessage";
 
@@ -82,15 +76,16 @@ function getRoleBadgeStyle(role: TenantMember["role"]): string {
 
 function TeamPage() {
   const queryClient = useQueryClient();
-  
+
   // Dialog & Modal State
-  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<TenantMember | null>(null);
-  
-  // Invite Form State
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"ADMIN" | "STAFF">("STAFF");
-  const [isInviting, setIsInviting] = useState(false);
+
+  // Add Account Form State
+  const [addEmail, setAddEmail] = useState("");
+  const [addPassword, setAddPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
 
   // Fetch team members
@@ -99,38 +94,56 @@ function TeamPage() {
     queryFn: fetchTeamMembers,
   });
 
-  const handleInviteSubmit = async (e: React.FormEvent) => {
+  // Fetch current user context
+  const { data: currentUser } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: getCurrentUser,
+  });
+
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteEmail.trim()) {
+
+    if (!addEmail.trim()) {
       toast.error(ro.validation.inviteEmailRequired);
       return;
     }
+    if (addPassword.length < 8) {
+      toast.error(ro.validation.passwordTooShort);
+      return;
+    }
 
-    setIsInviting(true);
+    setIsAdding(true);
     try {
-      await inviteTeamMember({
-        email: inviteEmail.trim(),
-        role: inviteRole,
+      const result = await createTeamMember({
+        email: addEmail.trim(),
+        password: addPassword,
+        role: "ADMIN",
       });
 
-      toast.success(ro.team.inviteSuccess);
+      if (result.addedExisting) {
+        toast.info(ro.team.existingUserAdded);
+      } else {
+        toast.success(ro.team.accountCreated);
+      }
+
       // Invalidate cache to refetch members list
       await queryClient.invalidateQueries({ queryKey: ["team-members"] });
-      
-      // Reset form states
-      setInviteEmail("");
-      setInviteRole("STAFF");
-      setIsInviteOpen(false);
+
+      // Reset form
+      setAddEmail("");
+      setAddPassword("");
+      setShowPassword(false);
+      setIsAddOpen(false);
     } catch (err: any) {
       toast.error(getErrorMessage(err));
     } finally {
-      setIsInviting(false);
+      setIsAdding(false);
     }
   };
 
   const handleRemoveConfirm = async () => {
     if (!memberToDelete) return;
-    
+
     setIsRemoving(true);
     try {
       await removeTeamMember(memberToDelete.id);
@@ -153,67 +166,76 @@ function TeamPage() {
             <h1 className="text-2xl font-semibold tracking-tight">{ro.team.title}</h1>
             <p className="text-sm text-muted-foreground">{ro.team.subtitle}</p>
           </div>
-          
-          {/* Invite Dialog */}
-          <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
+
+          {/* Add Account Dialog */}
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
               <Button className="h-10 px-4 font-medium flex items-center gap-2">
                 <UserPlus className="h-4 w-4" />
-                {ro.team.inviteBtn}
+                {ro.team.addAccount}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
-              <form onSubmit={handleInviteSubmit}>
+              <form onSubmit={handleAddSubmit}>
                 <DialogHeader className="gap-1">
-                  <DialogTitle className="text-lg">{ro.team.inviteTitle}</DialogTitle>
+                  <DialogTitle className="text-lg">{ro.team.addAccount}</DialogTitle>
                   <DialogDescription className="text-xs">
-                    {ro.team.inviteDesc}
+                    {ro.team.fullAccessNote}
                   </DialogDescription>
                 </DialogHeader>
-                
+
                 <div className="grid gap-4 py-5">
+                  {/* Email */}
                   <div className="grid gap-2">
-                    <Label htmlFor="email" className="text-xs font-semibold text-muted-foreground">{ro.team.emailLabel}</Label>
+                    <Label htmlFor="add-email" className="text-xs font-semibold text-muted-foreground">
+                      {ro.team.emailLabel}
+                    </Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
                       <Input
-                        id="email"
+                        id="add-email"
                         type="email"
                         placeholder={ro.team.emailPlaceholder}
                         className="pl-9 h-11 border-border/70 text-sm"
-                        value={inviteEmail}
-                        onChange={(e) => setInviteEmail(e.target.value)}
+                        value={addEmail}
+                        onChange={(e) => setAddEmail(e.target.value)}
                         required
-                        disabled={isInviting}
+                        disabled={isAdding}
                       />
                     </div>
                   </div>
-                  
+
+                  {/* Password */}
                   <div className="grid gap-2">
-                    <Label htmlFor="role" className="text-xs font-semibold text-muted-foreground">{ro.team.roleLabel}</Label>
-                    <Select
-                      value={inviteRole}
-                      onValueChange={(val: "ADMIN" | "STAFF") => setInviteRole(val)}
-                      disabled={isInviting}
-                    >
-                      <SelectTrigger className="h-11 border-border/70 text-sm">
-                        <SelectValue placeholder={ro.team.selectRole} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="STAFF" className="text-xs py-2.5">
-                          <div>
-                            <span className="font-semibold block">{ro.team.roleStaff}</span>
-                            <span className="text-[10px] text-muted-foreground block mt-0.5">{ro.team.roleStaffDesc}</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="ADMIN" className="text-xs py-2.5">
-                          <div>
-                            <span className="font-semibold block">{ro.team.roleAdmin}</span>
-                            <span className="text-[10px] text-muted-foreground block mt-0.5">{ro.team.roleAdminDesc}</span>
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="add-password" className="text-xs font-semibold text-muted-foreground">
+                      {ro.team.passwordLabel}
+                    </Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+                      <Input
+                        id="add-password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        className="pl-9 pr-10 h-11 border-border/70 text-sm"
+                        value={addPassword}
+                        onChange={(e) => setAddPassword(e.target.value)}
+                        required
+                        disabled={isAdding}
+                        minLength={8}
+                      />
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors"
+                        onClick={() => setShowPassword((v) => !v)}
+                        aria-label={showPassword ? ro.auth.hidePassword : ro.auth.showPassword}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      {ro.team.fullAccessNote}
+                    </p>
                   </div>
                 </div>
 
@@ -221,24 +243,24 @@ function TeamPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setIsInviteOpen(false)}
-                    disabled={isInviting}
+                    onClick={() => setIsAddOpen(false)}
+                    disabled={isAdding}
                     className="h-11"
                   >
                     {ro.common.cancel}
                   </Button>
                   <Button
                     type="submit"
-                    disabled={isInviting}
+                    disabled={isAdding}
                     className="h-11 px-6"
                   >
-                    {isInviting ? (
+                    {isAdding ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         {ro.team.inviting}
                       </>
                     ) : (
-                      ro.team.sendInvitation
+                      ro.team.addAccount
                     )}
                   </Button>
                 </DialogFooter>
@@ -247,7 +269,7 @@ function TeamPage() {
           </Dialog>
         </div>
 
-        {/* Errors state */}
+        {/* Error state */}
         {isError && (
           <div
             role="alert"
@@ -314,7 +336,7 @@ function TeamPage() {
                             </div>
                           </div>
                         </TableCell>
-                        
+
                         {/* Workspace Role */}
                         <TableCell className="py-4">
                           <Badge
@@ -324,15 +346,19 @@ function TeamPage() {
                             {ro.roles[member.role] ?? member.role}
                           </Badge>
                         </TableCell>
-                        
+
                         {/* Joined Date */}
                         <TableCell className="py-4 text-xs text-muted-foreground">
                           {formatDate(member.user.createdAt)}
                         </TableCell>
-                        
+
                         {/* Remove Action Button */}
                         <TableCell className="pr-6 py-4 text-right">
-                          {member.role === "OWNER" ? (
+                          {currentUser && member.userId === currentUser.id ? (
+                            <span className="text-xs text-muted-foreground font-medium px-2 py-1 bg-muted rounded-md select-none inline-block">
+                              {ro.team.youBadge}
+                            </span>
+                          ) : member.role === "OWNER" ? (
                             <Button
                               variant="ghost"
                               size="icon"
@@ -348,6 +374,7 @@ function TeamPage() {
                               size="icon"
                               onClick={() => setMemberToDelete(member)}
                               className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/5 transition-colors"
+                              title={ro.team.removeMember}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -369,7 +396,16 @@ function TeamPage() {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-base font-semibold">{ro.team.removeTitle}</AlertDialogTitle>
             <AlertDialogDescription className="text-sm">
-              {ro.team.removeDesc.replace("{email}", memberToDelete?.user.email || "")}
+              {(() => {
+                const parts = ro.team.removeDesc.split("{email}");
+                return (
+                  <>
+                    {parts[0]}
+                    <strong className="text-foreground font-semibold">{memberToDelete?.user.email}</strong>
+                    {parts[1]}
+                  </>
+                );
+              })()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -397,3 +433,4 @@ function TeamPage() {
     </AdminLayout>
   );
 }
+

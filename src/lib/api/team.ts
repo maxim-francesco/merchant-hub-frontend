@@ -22,10 +22,11 @@ interface TeamMembersEnvelope {
   };
 }
 
-interface InviteMemberEnvelope {
+interface CreateMemberEnvelope {
   status: string;
   data: {
     member: TenantMember;
+    addedExisting: boolean;
   };
 }
 
@@ -43,14 +44,20 @@ export async function fetchTeamMembers(): Promise<TenantMember[]> {
 }
 
 /**
- * Invite a new member to the workspace by email.
+ * Create a new member account for the workspace.
+ * - New email: creates User with the supplied password.
+ * - Existing email: adds as member only (password NOT modified); addedExisting = true.
  */
-export async function inviteTeamMember(data: {
+export async function createTeamMember(payload: {
   email: string;
-  role: "ADMIN" | "STAFF";
-}): Promise<TenantMember> {
-  const { data: envelope } = await apiClient.post<InviteMemberEnvelope>("/team/invite", data);
-  return envelope.data.member;
+  password: string;
+  role?: string;
+}): Promise<{ member: TenantMember; addedExisting: boolean }> {
+  const { data: envelope } = await apiClient.post<CreateMemberEnvelope>(
+    "/team/invite",
+    payload,
+  );
+  return envelope.data;
 }
 
 /**
