@@ -108,6 +108,7 @@ export const ro = {
     tableCategory: "Categorie",
     tablePrice: "Preț (RON)",
     tableAttrs: "Atribute",
+    outOfStock: "Epuizat",
     noProducts: "Nu s-au găsit produse",
     noProductsDesc: "Adaugă primul tău produs pentru a începe.",
     editProduct: "Editează produsul",
@@ -299,6 +300,9 @@ export const ro = {
     continueShopping: "Continuă cumpărăturile",
     noProducts: "Nu s-au găsit produse în această colecție.",
     addToCart: "Adaugă în coș",
+    outOfStock: "Stoc epuizat",
+    lastFewUnits: "Ultimele {count} bucăți",
+    maxStockReached: "Ai atins stocul disponibil.",
     connectedApi: "Client de test conectat la API v1.",
     addToCartSuccess: "adăugat în coș.",
     itemRemoved: "Produs eliminat din coș.",
@@ -358,7 +362,8 @@ export const ro = {
     ORDER_NOT_EDITABLE: "Doar comenzile în așteptare pot fi editate.",
     ALREADY_MEMBER: "Acest utilizator este deja membru al magazinului.",
     CANNOT_REMOVE_LAST_MEMBER: "Nu poți elimina ultimul membru al magazinului.",
-    CANNOT_REMOVE_SELF: "Nu te poți elimina pe tine din magazin."
+    CANNOT_REMOVE_SELF: "Nu te poți elimina pe tine din magazin.",
+    INSUFFICIENT_STOCK: "Stoc insuficient pentru unul sau mai multe produse."
   },
   validation: {
     email: "Te rugăm să introduci o adresă de email validă.",

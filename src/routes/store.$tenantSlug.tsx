@@ -128,12 +128,28 @@ function StorefrontPage() {
 
   // Cart operations
   const addToCart = (product: StorefrontProduct) => {
+    if (product.stock <= 0) {
+      toast.info(ro.storefront.maxStockReached);
+      return;
+    }
     const existing = cart.find((item) => item.product.id === product.id);
     if (existing) {
+      const newQty = existing.quantity + 1;
+      if (newQty > product.stock) {
+        toast.info(ro.storefront.maxStockReached);
+        setCart(
+          cart.map((item) =>
+            item.product.id === product.id
+              ? { ...item, quantity: product.stock }
+              : item
+          )
+        );
+        return;
+      }
       setCart(
         cart.map((item) =>
           item.product.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: newQty }
             : item
         )
       );
@@ -149,6 +165,10 @@ function StorefrontPage() {
         .map((item) => {
           if (item.product.id === productId) {
             const nextQty = item.quantity + delta;
+            if (delta > 0 && nextQty > item.product.stock) {
+              toast.info(ro.storefront.maxStockReached);
+              return { ...item, quantity: item.product.stock };
+            }
             return { ...item, quantity: nextQty };
           }
           return item;
@@ -333,7 +353,8 @@ function StorefrontPage() {
                           </span>
                           <button
                             onClick={() => updateQty(item.product.id, 1)}
-                            className="p-1 text-stone-500 hover:text-stone-900"
+                            disabled={item.quantity >= item.product.stock}
+                            className="p-1 text-stone-500 hover:text-stone-900 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <Plus className="h-3.5 w-3.5" />
                           </button>
@@ -583,6 +604,14 @@ function StorefrontPage() {
                       >
                         {product.category.name}
                       </Badge>
+                      {product.stock === 0 && (
+                        <Badge
+                          variant="destructive"
+                          className="absolute top-3 right-3 bg-red-600/90 text-white border-0 text-[10px] font-semibold"
+                        >
+                          {ro.storefront.outOfStock}
+                        </Badge>
+                      )}
                     </div>
 
                     {/* Metadata & Actions */}
@@ -603,12 +632,30 @@ function StorefrontPage() {
                         </span>
                       </div>
 
-                      <Button
-                        onClick={() => addToCart(product)}
-                        className="h-10 w-full bg-stone-900 hover:bg-stone-850 text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors"
-                      >
-                        {ro.storefront.addToCart}
-                      </Button>
+                      {product.stock > 0 && product.stock < 5 && (
+                        <p className="text-xs text-amber-600 font-semibold">
+                          {ro.storefront.lastFewUnits.replace("{count}", String(product.stock))}
+                        </p>
+                      )}
+
+                      {(() => {
+                        const inCart = cart.find((item) => item.product.id === product.id);
+                        const isMax = inCart ? inCart.quantity >= product.stock : false;
+                        const isOutOfStock = product.stock === 0;
+                        return (
+                          <Button
+                            onClick={() => addToCart(product)}
+                            disabled={isOutOfStock || isMax}
+                            className="h-10 w-full bg-stone-900 hover:bg-stone-850 text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors"
+                          >
+                            {isOutOfStock
+                              ? ro.storefront.outOfStock
+                              : isMax
+                              ? "Stoc maxim în coș"
+                              : ro.storefront.addToCart}
+                          </Button>
+                        );
+                      })()}
                     </div>
                   </div>
                 );

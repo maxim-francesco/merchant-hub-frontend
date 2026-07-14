@@ -9,6 +9,7 @@ export interface StorefrontProduct {
   name: string;
   slug: string;
   price: string;
+  stock: number;
   attributes: Record<string, any>;
   category: {
     id: string;

@@ -131,6 +131,9 @@ function SkeletonRows() {
             <Skeleton className="h-5 w-20 rounded-full" />
           </TableCell>
           <TableCell>
+            <Skeleton className="h-3.5 w-10 ml-auto" />
+          </TableCell>
+          <TableCell>
             <Skeleton className="h-3.5 w-16 ml-auto" />
           </TableCell>
           <TableCell>
@@ -193,6 +196,21 @@ function ProductRow({ product, onEdit, onDelete }: ProductRowProps) {
         </Badge>
       </TableCell>
 
+      <TableCell className="py-3.5 text-right tabular-nums font-medium text-sm">
+        {product.stock === 0 ? (
+          <Badge
+            variant="destructive"
+            className="text-[11px] font-semibold px-2 py-0.5"
+          >
+            {ro.products.outOfStock}
+          </Badge>
+        ) : (
+          <span className={product.stock < 5 ? "text-amber-600 dark:text-amber-500 font-semibold" : "text-muted-foreground"}>
+            {product.stock}
+          </span>
+        )}
+      </TableCell>
+
       <TableCell className="py-3.5 text-right tabular-nums font-medium text-sm pr-5">
         {fmtPrice(product.price)}
       </TableCell>
@@ -250,7 +268,7 @@ const productSchema = z.object({
   }),
   categoryId: z.string().min(1, ro.validation.categoryRequired),
   sku: z.string().optional(),
-  stock: z.string().optional(),
+  stock: z.coerce.number().int("Stocul trebuie să fie un număr întreg.").min(0, "Stocul nu poate fi negativ."),
   description: z.string().optional(),
   imageUrl: z.string().optional(),
 });
@@ -281,7 +299,7 @@ function ProductsPage() {
       price: "",
       categoryId: "",
       sku: "",
-      stock: "",
+      stock: 0,
       description: "",
       imageUrl: "",
     },
@@ -381,7 +399,7 @@ function ProductsPage() {
       price: "",
       categoryId: categories[0]?.id || "",
       sku: "",
-      stock: "",
+      stock: 0,
       description: "",
       imageUrl: "",
     });
@@ -400,7 +418,7 @@ function ProductsPage() {
     // Custom helper attributes
     const saved = p.attributes as Record<string, any>;
     form.setValue("sku", saved?.sku || "");
-    form.setValue("stock", saved?.stock !== undefined ? String(saved.stock) : "");
+    form.setValue("stock", p.stock !== undefined ? p.stock : 0, { shouldValidate: true });
     form.setValue("description", saved?.description || "");
     form.setValue("imageUrl", saved?.imageUrl || "");
 
@@ -457,9 +475,9 @@ function ProductsPage() {
       name: values.name,
       price: normalizedPrice,
       categoryId: values.categoryId,
+      stock: values.stock,
       attributes: {
         sku: finalSku,
-        stock: values.stock || "",
         description: values.description || "",
         imageUrl: values.imageUrl || "",
         ...dynamicAttrs,
@@ -537,6 +555,9 @@ function ProductsPage() {
                     <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3">
                       {ro.products.tableCategory}
                     </TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 text-right">
+                      {ro.products.stockLabel}
+                    </TableHead>
                     <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 text-right pr-5">
                       {ro.products.tablePrice}
                     </TableHead>
@@ -561,7 +582,7 @@ function ProductsPage() {
 
                   {!isLoading && !isError && products?.length === 0 && (
                     <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={5} className="py-16 text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="py-16 text-center text-muted-foreground">
                         <Package className="h-8 w-8 mx-auto mb-3 opacity-30" />
                         <p className="text-sm font-medium">{ro.products.noProducts}</p>
                         <p className="text-xs mt-1 opacity-70">
@@ -637,7 +658,7 @@ function ProductsPage() {
                     <FormItem className="grid gap-1">
                       <FormLabel className="text-[13px] font-medium">{ro.products.stockLabel}</FormLabel>
                       <FormControl>
-                        <Input placeholder={ro.products.stockPlaceholder} type="number" className="h-11" {...field} />
+                        <Input placeholder={ro.products.stockPlaceholder} type="number" inputMode="numeric" className="h-11" {...field} />
                       </FormControl>
                       <FormMessage className="text-xs" />
                     </FormItem>

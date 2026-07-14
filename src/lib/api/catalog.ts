@@ -27,6 +27,7 @@ export interface Product {
   slug: string;
   /** Prisma returns Decimal as a string over JSON */
   price: string;
+  stock: number;
   attributes: ProductAttributes;
   createdAt: string;
   category: ProductCategory;
@@ -72,6 +73,7 @@ export interface CreateProductData {
   name: string;
   price: string | number;
   categoryId: string;
+  stock: number;
   attributes?: ProductAttributes;
 }
 
