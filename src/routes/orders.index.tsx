@@ -101,6 +101,35 @@ function SkeletonRows() {
   );
 }
 
+function OrderCard({ order, onSelect }: { order: Order; onSelect: (o: Order) => void }) {
+  return (
+    <div
+      onClick={() => onSelect(order)}
+      className="flex flex-col gap-2 p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-mono text-xs font-semibold text-foreground/80">
+          #{order.id.slice(0, 8).toUpperCase()}
+        </span>
+        <Badge
+          variant="outline"
+          className={`text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border ${STATUS_BADGE_STYLES[order.status]}`}
+        >
+          {ro.statuses[order.status]}
+        </Badge>
+      </div>
+      <div className="min-w-0">
+        <div className="text-sm font-medium text-foreground truncate">{order.customerName}</div>
+        <div className="text-xs text-muted-foreground/60 truncate">{order.customerEmail}</div>
+      </div>
+      <div className="flex items-center justify-between gap-2 pt-0.5">
+        <span className="text-xs text-muted-foreground/90">{formatDate(order.createdAt)}</span>
+        <span className="text-sm font-semibold text-foreground tabular-nums">{fmtPrice(order.totalAmount)}</span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Orders Page Component ────────────────────────────────────────────────────
 
 function OrdersPage() {
@@ -200,87 +229,132 @@ function OrdersPage() {
         {/* Data Table */}
         <Card className="overflow-hidden border-border/60">
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b border-border/60 bg-muted/20 hover:bg-muted/20">
-                    <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground pl-5 py-3 w-[140px]">
-                      {ro.orders.tableId}
-                    </TableHead>
-                    <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 w-[180px]">
-                      {ro.orders.tableDate}
-                    </TableHead>
-                    <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3">
-                      {ro.orders.tableCustomer}
-                    </TableHead>
-                    <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 text-right">
-                      {ro.orders.tableTotal}
-                    </TableHead>
-                    <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 pr-5 w-[140px]">
-                      {ro.orders.tableStatus}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {/* Loading skeletons */}
-                  {isLoading && <SkeletonRows />}
-
-                  {/* Orders rows */}
-                  {orders?.map((order) => (
-                    <TableRow
-                      key={order.id}
-                      onClick={() => setSelectedOrder(order)}
-                      className="group border-b border-border/60 hover:bg-muted/30 transition-colors cursor-pointer"
-                    >
-                      <TableCell className="py-3.5 pl-5 font-mono text-xs font-semibold text-foreground/80">
-                        {order.id.slice(0, 8).toUpperCase()}
-                      </TableCell>
-                      <TableCell className="py-3.5 text-sm text-muted-foreground/90 whitespace-nowrap">
-                        {formatDate(order.createdAt)}
-                      </TableCell>
-                      <TableCell className="py-3.5">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-foreground truncate max-w-[200px]">
-                            {order.customerName}
-                          </span>
-                          <span className="text-xs text-muted-foreground/60 truncate max-w-[220px]">
-                            {order.customerEmail}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-3.5 text-right font-medium text-sm tabular-nums">
-                        {fmtPrice(order.totalAmount)}
-                      </TableCell>
-                      <TableCell className="py-3.5 pr-5">
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border ${
-                            STATUS_BADGE_STYLES[order.status]
-                          }`}
-                        >
-                          {ro.statuses[order.status]}
-                        </Badge>
-                      </TableCell>
+            {/* Desktop View */}
+            <div className="hidden md:block">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b border-border/60 bg-muted/20 hover:bg-muted/20">
+                      <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground pl-5 py-3 w-[140px]">
+                        {ro.orders.tableId}
+                      </TableHead>
+                      <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 w-[180px]">
+                        {ro.orders.tableDate}
+                      </TableHead>
+                      <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3">
+                        {ro.orders.tableCustomer}
+                      </TableHead>
+                      <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 text-right">
+                        {ro.orders.tableTotal}
+                      </TableHead>
+                      <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 pr-5 w-[140px]">
+                        {ro.orders.tableStatus}
+                      </TableHead>
                     </TableRow>
-                  ))}
+                  </TableHeader>
+                  <TableBody>
+                    {/* Loading skeletons */}
+                    {isLoading && <SkeletonRows />}
 
-                  {/* Empty state */}
-                  {!isLoading && !isError && orders?.length === 0 && (
-                    <TableRow className="hover:bg-transparent">
-                      <TableCell
-                        colSpan={5}
-                        className="py-16 text-center text-muted-foreground"
+                    {/* Orders rows */}
+                    {orders?.map((order) => (
+                      <TableRow
+                        key={order.id}
+                        onClick={() => setSelectedOrder(order)}
+                        className="group border-b border-border/60 hover:bg-muted/30 transition-colors cursor-pointer"
                       >
-                        <ShoppingBag className="h-8 w-8 mx-auto mb-3 opacity-30" />
-                        <p className="text-sm font-medium">{ro.orders.noOrders}</p>
-                        <p className="text-xs mt-1 opacity-70">
-                          {ro.orders.noOrdersDesc}
-                        </p>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                        <TableCell className="py-3.5 pl-5 font-mono text-xs font-semibold text-foreground/80">
+                          {order.id.slice(0, 8).toUpperCase()}
+                        </TableCell>
+                        <TableCell className="py-3.5 text-sm text-muted-foreground/90 whitespace-nowrap">
+                          {formatDate(order.createdAt)}
+                        </TableCell>
+                        <TableCell className="py-3.5">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-foreground truncate max-w-[200px]">
+                              {order.customerName}
+                            </span>
+                            <span className="text-xs text-muted-foreground/60 truncate max-w-[220px]">
+                              {order.customerEmail}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-3.5 text-right font-medium text-sm tabular-nums">
+                          {fmtPrice(order.totalAmount)}
+                        </TableCell>
+                        <TableCell className="py-3.5 pr-5">
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border ${
+                              STATUS_BADGE_STYLES[order.status]
+                            }`}
+                          >
+                            {ro.statuses[order.status]}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+
+                    {/* Empty state */}
+                    {!isLoading && !isError && orders?.length === 0 && (
+                      <TableRow className="hover:bg-transparent">
+                        <TableCell
+                          colSpan={5}
+                          className="py-16 text-center text-muted-foreground"
+                        >
+                          <ShoppingBag className="h-8 w-8 mx-auto mb-3 opacity-30" />
+                          <p className="text-sm font-medium">{ro.orders.noOrders}</p>
+                          <p className="text-xs mt-1 opacity-70">
+                            {ro.orders.noOrdersDesc}
+                          </p>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* Mobile View */}
+            <div className="md:hidden">
+              {isLoading && (
+                <div className="divide-y divide-border/60">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex flex-col gap-2 p-4">
+                      <div className="flex items-center justify-between">
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-40" />
+                      </div>
+                      <div className="flex items-center justify-between pt-0.5">
+                        <Skeleton className="h-3.5 w-24" />
+                        <Skeleton className="h-4 w-16" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {!isLoading && !isError && orders?.length === 0 && (
+                <div className="py-12 text-center text-muted-foreground">
+                  <ShoppingBag className="h-8 w-8 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm font-medium">{ro.orders.noOrders}</p>
+                  <p className="text-xs mt-1 opacity-70">
+                    {ro.orders.noOrdersDesc}
+                  </p>
+                </div>
+              )}
+
+              {!isLoading && orders && orders.length > 0 && (
+                <div className="divide-y divide-border/60">
+                  {orders.map((order) => (
+                    <OrderCard key={order.id} order={order} onSelect={setSelectedOrder} />
+                  ))}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -288,7 +362,7 @@ function OrdersPage() {
 
       {/* ── Side panel Sheet to view specific order details ── */}
       <Sheet open={selectedOrder !== null} onOpenChange={(open) => !open && setSelectedOrder(null)}>
-        <SheetContent className="sm:max-w-md border-l border-border/80 p-6 flex flex-col gap-6 h-full overflow-y-auto">
+        <SheetContent className="w-full sm:max-w-md border-l border-border/80 p-6 flex flex-col gap-6 h-full overflow-y-auto">
           {selectedOrder && (
             <>
               <SheetHeader className="text-left space-y-1.5 border-b border-border/50 pb-5">
