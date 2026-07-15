@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Plus, X, Loader2, Store, Trash2 } from "lucide-react";
+import { Plus, X, Loader2, Store, Trash2, MoreHorizontal, Pencil } from "lucide-react";
 import { ro } from "@/lib/i18n/ro";
 import { getErrorMessage } from "@/lib/i18n/getErrorMessage";
 
@@ -16,6 +16,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Form,
   FormControl,
@@ -219,46 +226,52 @@ function CategoriesPage() {
             categories.map((c) => (
               <Card key={c.id} className="border-border/60 hover:border-border/100 transition-colors shadow-sm">
                 <CardContent className="p-4">
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-                    <div className="min-w-0">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
                       <div className="font-medium truncate text-foreground">{c.name}</div>
                       <div className="text-xs text-muted-foreground mt-0.5">
                         {c._count?.products ?? 0} {c._count?.products === 1 ? ro.common.product : ro.common.products}
                       </div>
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        {getCategoryAttributes(c).map((a) => (
-                          <Badge key={a} variant="secondary" className="font-normal">
-                            {a}
-                          </Badge>
-                        ))}
-                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setEditingId(c.id);
-                          form.setValue("name", c.name, { shouldValidate: true });
-                          setAttrs(getCategoryAttributes(c));
-                          setIsModalOpen(true);
-                        }}
-                      >
-                        {ro.common.edit}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => setCategoryToDelete(c.id)}
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 -mr-1" aria-label="Open category actions">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44 text-sm border-border/60">
+                        <DropdownMenuItem
+                          className="gap-2 cursor-pointer"
+                          onClick={() => {
+                            setEditingId(c.id);
+                            form.setValue("name", c.name, { shouldValidate: true });
+                            setAttrs(getCategoryAttributes(c));
+                            setIsModalOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                          {ro.common.edit}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                          onClick={() => setCategoryToDelete(c.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          {ro.common.delete}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
+                  {getCategoryAttributes(c).length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {getCategoryAttributes(c).map((a) => (
+                        <Badge key={a} variant="secondary" className="font-normal">
+                          {a}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))
