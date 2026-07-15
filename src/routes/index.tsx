@@ -130,7 +130,7 @@ function Dashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {metricsCards.map((c) => (
             <Card key={c.label} className="border-border/60 shadow-sm">
-              <CardContent className="p-4 flex flex-col justify-between h-28">
+              <CardContent className="p-4 flex flex-col justify-between min-h-[7rem]">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-muted-foreground">{c.label}</span>
                   <c.icon className="h-4 w-4 text-muted-foreground/60" />
@@ -141,9 +141,9 @@ function Dashboard() {
                   ) : (
                     <div className="text-xl sm:text-2xl font-semibold tracking-tight tabular-nums mt-1">{c.value}</div>
                   )}
-                  <div className="text-[10px] text-muted-foreground/70 mt-1 flex items-center gap-1.5">
+                  <div className="text-[10px] text-muted-foreground/70 mt-1.5 flex flex-col gap-0.5">
                     <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{c.change}</span>
-                    <span>• {c.subtext}</span>
+                    <span className="leading-snug">{c.subtext}</span>
                   </div>
                 </div>
               </CardContent>
