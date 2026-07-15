@@ -109,6 +109,7 @@ export const ro = {
     tablePrice: "Preț (RON)",
     tableAttrs: "Atribute",
     outOfStock: "Epuizat",
+    stockShort: "Stoc",
     noProducts: "Nu s-au găsit produse",
     noProductsDesc: "Adaugă primul tău produs pentru a începe.",
     editProduct: "Editează produsul",

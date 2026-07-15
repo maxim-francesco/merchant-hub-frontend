@@ -260,6 +260,81 @@ function ProductRow({ product, onEdit, onDelete }: ProductRowProps) {
   );
 }
 
+function ProductCard({ product, onEdit, onDelete }: ProductRowProps) {
+  const attribute = getPrimaryAttribute(product.attributes);
+  const imageUrl =
+    typeof product.attributes === "object" && product.attributes !== null
+      ? (product.attributes as Record<string, any>).imageUrl
+      : null;
+  return (
+    <div className="flex items-start gap-3 p-4">
+      {imageUrl && typeof imageUrl === "string" ? (
+        <div className="h-11 w-11 shrink-0 overflow-hidden rounded-md border border-border bg-muted/50">
+          <img src={imageUrl} alt={product.name} className="h-full w-full object-cover" />
+        </div>
+      ) : (
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-border bg-muted/50 text-muted-foreground">
+          <Package className="h-5 w-5" />
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-foreground truncate">{product.name}</div>
+            <div className="text-xs text-muted-foreground/70 truncate font-mono">{product.slug}</div>
+          </div>
+          {/* Actions — ALWAYS visible on mobile (no hover on touch) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 -mr-1" aria-label="Open row actions">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44 text-sm border-border/60">
+              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => onEdit(product)}>
+                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                {ro.products.editProduct}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                onClick={() => onDelete(product)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                {ro.common.delete}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <Badge variant="secondary" className="text-[11px] font-normal px-2 py-0.5 border border-border/50">
+            {product.category.name}
+          </Badge>
+          {attribute && (
+            <Badge variant="outline" className="text-[11px] font-normal text-muted-foreground border-border/50 max-w-[160px] truncate">
+              {attribute}
+            </Badge>
+          )}
+        </div>
+        <div className="mt-2.5 flex items-center justify-between">
+          <div className="text-xs">
+            {product.stock === 0 ? (
+              <Badge variant="destructive" className="text-[11px] font-semibold px-2 py-0.5">
+                {ro.products.outOfStock}
+              </Badge>
+            ) : (
+              <span className={product.stock < 5 ? "text-amber-600 dark:text-amber-500 font-semibold" : "text-muted-foreground"}>
+                {ro.products.stockShort}: {product.stock}
+              </span>
+            )}
+          </div>
+          <div className="text-sm font-semibold text-foreground tabular-nums">{fmtPrice(product.price)}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Form validation ──────────────────────────────────────────────────────────
 const productSchema = z.object({
   name: z.string().min(2, ro.validation.productMin),
@@ -545,54 +620,97 @@ function ProductsPage() {
         {/* Data Table */}
         <Card className="overflow-hidden border-border/60 shadow-sm">
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b border-border/60 bg-muted/20 hover:bg-muted/20">
-                    <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground pl-5 py-3">
-                      {ro.products.tableProduct}
-                    </TableHead>
-                    <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3">
-                      {ro.products.tableCategory}
-                    </TableHead>
-                    <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 text-right">
-                      {ro.products.stockLabel}
-                    </TableHead>
-                    <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 text-right pr-5">
-                      {ro.products.tablePrice}
-                    </TableHead>
-                    <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3">
-                      {ro.products.tableAttrs}
-                    </TableHead>
-                    <TableHead className="py-3 pr-4 w-10" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading && <SkeletonRows />}
-
-                  {!isLoading &&
-                    products?.map((product) => (
-                      <ProductRow
-                        key={product.id}
-                        product={product}
-                        onEdit={handleOpenEdit}
-                        onDelete={setProductToDelete}
-                      />
-                    ))}
-
-                  {!isLoading && !isError && products?.length === 0 && (
-                    <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={6} className="py-16 text-center text-muted-foreground">
-                        <Package className="h-8 w-8 mx-auto mb-3 opacity-30" />
-                        <p className="text-sm font-medium">{ro.products.noProducts}</p>
-                        <p className="text-xs mt-1 opacity-70">
-                          {ro.products.noProductsDesc}
-                        </p>
-                      </TableCell>
+            {/* Desktop View */}
+            <div className="hidden md:block">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b border-border/60 bg-muted/20 hover:bg-muted/20">
+                      <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground pl-5 py-3">
+                        {ro.products.tableProduct}
+                      </TableHead>
+                      <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3">
+                        {ro.products.tableCategory}
+                      </TableHead>
+                      <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 text-right">
+                        {ro.products.stockLabel}
+                      </TableHead>
+                      <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 text-right pr-5">
+                        {ro.products.tablePrice}
+                      </TableHead>
+                      <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3">
+                        {ro.products.tableAttrs}
+                      </TableHead>
+                      <TableHead className="py-3 pr-4 w-10" />
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading && <SkeletonRows />}
+
+                    {!isLoading &&
+                      products?.map((product) => (
+                        <ProductRow
+                          key={product.id}
+                          product={product}
+                          onEdit={handleOpenEdit}
+                          onDelete={setProductToDelete}
+                        />
+                      ))}
+
+                    {!isLoading && !isError && products?.length === 0 && (
+                      <TableRow className="hover:bg-transparent">
+                        <TableCell colSpan={6} className="py-16 text-center text-muted-foreground">
+                          <Package className="h-8 w-8 mx-auto mb-3 opacity-30" />
+                          <p className="text-sm font-medium">{ro.products.noProducts}</p>
+                          <p className="text-xs mt-1 opacity-70">
+                            {ro.products.noProductsDesc}
+                          </p>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* Mobile View */}
+            <div className="md:hidden">
+              {isLoading && (
+                <div className="divide-y divide-border/60">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex items-start gap-3 p-4">
+                      <Skeleton className="h-9 w-9 rounded-md shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-3 w-16" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {!isLoading && !isError && products?.length === 0 && (
+                <div className="py-12 text-center text-muted-foreground">
+                  <Package className="h-8 w-8 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm font-medium">{ro.products.noProducts}</p>
+                  <p className="text-xs mt-1 opacity-70">
+                    {ro.products.noProductsDesc}
+                  </p>
+                </div>
+              )}
+
+              {!isLoading && products && products.length > 0 && (
+                <div className="divide-y divide-border/60">
+                  {products.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onEdit={handleOpenEdit}
+                      onDelete={setProductToDelete}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
