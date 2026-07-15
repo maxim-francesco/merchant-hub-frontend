@@ -18,9 +18,7 @@ import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductsIndexRouteImport } from './routes/products.index'
 import { Route as OrdersIndexRouteImport } from './routes/orders.index'
-import { Route as StoreTenantSlugRouteImport } from './routes/store.$tenantSlug'
 import { Route as OrdersIdRouteImport } from './routes/orders.$id'
-import { Route as StoreTenantSlugSuccessRouteImport } from './routes/store.$tenantSlug.success'
 
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
@@ -67,20 +65,10 @@ const OrdersIndexRoute = OrdersIndexRouteImport.update({
   path: '/',
   getParentRoute: () => OrdersRoute,
 } as any)
-const StoreTenantSlugRoute = StoreTenantSlugRouteImport.update({
-  id: '/store/$tenantSlug',
-  path: '/store/$tenantSlug',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const OrdersIdRoute = OrdersIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => OrdersRoute,
-} as any)
-const StoreTenantSlugSuccessRoute = StoreTenantSlugSuccessRouteImport.update({
-  id: '/success',
-  path: '/success',
-  getParentRoute: () => StoreTenantSlugRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -92,10 +80,8 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/team': typeof TeamRoute
   '/orders/$id': typeof OrdersIdRoute
-  '/store/$tenantSlug': typeof StoreTenantSlugRouteWithChildren
   '/orders/': typeof OrdersIndexRoute
   '/products/': typeof ProductsIndexRoute
-  '/store/$tenantSlug/success': typeof StoreTenantSlugSuccessRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -104,10 +90,8 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/team': typeof TeamRoute
   '/orders/$id': typeof OrdersIdRoute
-  '/store/$tenantSlug': typeof StoreTenantSlugRouteWithChildren
   '/orders': typeof OrdersIndexRoute
   '/products': typeof ProductsIndexRoute
-  '/store/$tenantSlug/success': typeof StoreTenantSlugSuccessRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -119,10 +103,8 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/team': typeof TeamRoute
   '/orders/$id': typeof OrdersIdRoute
-  '/store/$tenantSlug': typeof StoreTenantSlugRouteWithChildren
   '/orders/': typeof OrdersIndexRoute
   '/products/': typeof ProductsIndexRoute
-  '/store/$tenantSlug/success': typeof StoreTenantSlugSuccessRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -135,10 +117,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/orders/$id'
-    | '/store/$tenantSlug'
     | '/orders/'
     | '/products/'
-    | '/store/$tenantSlug/success'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -147,10 +127,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/orders/$id'
-    | '/store/$tenantSlug'
     | '/orders'
     | '/products'
-    | '/store/$tenantSlug/success'
   id:
     | '__root__'
     | '/'
@@ -161,10 +139,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/orders/$id'
-    | '/store/$tenantSlug'
     | '/orders/'
     | '/products/'
-    | '/store/$tenantSlug/success'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -175,7 +151,6 @@ export interface RootRouteChildren {
   ProductsRoute: typeof ProductsRouteWithChildren
   SettingsRoute: typeof SettingsRoute
   TeamRoute: typeof TeamRoute
-  StoreTenantSlugRoute: typeof StoreTenantSlugRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -243,26 +218,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersIndexRouteImport
       parentRoute: typeof OrdersRoute
     }
-    '/store/$tenantSlug': {
-      id: '/store/$tenantSlug'
-      path: '/store/$tenantSlug'
-      fullPath: '/store/$tenantSlug'
-      preLoaderRoute: typeof StoreTenantSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/orders/$id': {
       id: '/orders/$id'
       path: '/$id'
       fullPath: '/orders/$id'
       preLoaderRoute: typeof OrdersIdRouteImport
       parentRoute: typeof OrdersRoute
-    }
-    '/store/$tenantSlug/success': {
-      id: '/store/$tenantSlug/success'
-      path: '/success'
-      fullPath: '/store/$tenantSlug/success'
-      preLoaderRoute: typeof StoreTenantSlugSuccessRouteImport
-      parentRoute: typeof StoreTenantSlugRoute
     }
   }
 }
@@ -292,18 +253,6 @@ const ProductsRouteWithChildren = ProductsRoute._addFileChildren(
   ProductsRouteChildren,
 )
 
-interface StoreTenantSlugRouteChildren {
-  StoreTenantSlugSuccessRoute: typeof StoreTenantSlugSuccessRoute
-}
-
-const StoreTenantSlugRouteChildren: StoreTenantSlugRouteChildren = {
-  StoreTenantSlugSuccessRoute: StoreTenantSlugSuccessRoute,
-}
-
-const StoreTenantSlugRouteWithChildren = StoreTenantSlugRoute._addFileChildren(
-  StoreTenantSlugRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CategoriesRoute: CategoriesRoute,
@@ -312,7 +261,6 @@ const rootRouteChildren: RootRouteChildren = {
   ProductsRoute: ProductsRouteWithChildren,
   SettingsRoute: SettingsRoute,
   TeamRoute: TeamRoute,
-  StoreTenantSlugRoute: StoreTenantSlugRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

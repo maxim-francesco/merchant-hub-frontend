@@ -237,7 +237,7 @@ export function OrderFormDialog({
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {ro.storefront.b2cLabel}
+                {ro.orders.b2cLabel}
               </button>
               <button
                 type="button"
@@ -248,7 +248,7 @@ export function OrderFormDialog({
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {ro.storefront.b2bLabel}
+                {ro.orders.b2bLabel}
               </button>
             </div>
           </div>
@@ -263,7 +263,7 @@ export function OrderFormDialog({
                 id="customerName"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                placeholder={ro.storefront.custNamePlaceholder}
+                placeholder={ro.orders.custNamePlaceholder}
                 required
               />
             </div>
@@ -276,7 +276,7 @@ export function OrderFormDialog({
                 type="email"
                 value={customerEmail}
                 onChange={(e) => setCustomerEmail(e.target.value)}
-                placeholder={ro.storefront.custEmailPlaceholder}
+                placeholder={ro.orders.custEmailPlaceholder}
                 required
               />
             </div>

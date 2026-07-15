@@ -20,48 +20,23 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // Resolve tenant context dynamically
-    const isStorefront = config.url?.startsWith("/storefront");
-    const isResolveEndpoint = config.url?.includes("/resolve/");
-
-    if (isStorefront) {
-      if (!isResolveEndpoint) {
-        let tenantId = useTenantStore.getState().activeStorefrontTenant?.id;
-        
-        // Fallback: Try reading directly from localStorage to bypass hydration lag
-        if (!tenantId && typeof window !== "undefined") {
-          try {
-            const rawStore = localStorage.getItem("tenant-store");
-            if (rawStore) {
-              const parsed = JSON.parse(rawStore);
-              tenantId = parsed?.state?.activeStorefrontTenant?.id;
-            }
-          } catch (e) {}
+    let tenantId = useTenantStore.getState().activeAdminTenant?.id;
+    
+    // Fallback: Try reading directly from localStorage to bypass hydration lag
+    if (!tenantId && typeof window !== "undefined") {
+      try {
+        const rawStore = localStorage.getItem("tenant-store");
+        if (rawStore) {
+          const parsed = JSON.parse(rawStore);
+          tenantId = parsed?.state?.activeAdminTenant?.id;
         }
+      } catch (e) {
+        console.error("Error reading tenant from localStorage:", e);
+      }
+    }
 
-        if (tenantId) {
-          config.headers["x-tenant-id"] = tenantId;
-        }
-      }
-    } else {
-      let tenantId = useTenantStore.getState().activeAdminTenant?.id;
-      
-      // Fallback: Try reading directly from localStorage to bypass hydration lag
-      if (!tenantId && typeof window !== "undefined") {
-        try {
-          const rawStore = localStorage.getItem("tenant-store");
-          if (rawStore) {
-            const parsed = JSON.parse(rawStore);
-            tenantId = parsed?.state?.activeAdminTenant?.id;
-          }
-        } catch (e) {
-          console.error("Error reading tenant from localStorage:", e);
-        }
-      }
-
-      if (tenantId) {
-        config.headers["x-tenant-id"] = tenantId;
-      }
+    if (tenantId) {
+      config.headers["x-tenant-id"] = tenantId;
     }
 
     return config;
