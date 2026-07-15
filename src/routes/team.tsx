@@ -74,6 +74,72 @@ function getRoleBadgeStyle(role: TenantMember["role"]): string {
   }
 }
 
+function MemberCard({
+  member,
+  currentUser,
+  onDelete,
+}: {
+  member: TenantMember;
+  currentUser?: TenantMember["user"] | null;
+  onDelete: (m: TenantMember) => void;
+}) {
+  return (
+    <div className="flex items-start gap-3 p-4">
+      <Avatar className="h-10 w-10 border border-border shrink-0">
+        <AvatarFallback className="text-xs font-semibold bg-stone-100 text-stone-700 dark:bg-stone-900 dark:text-stone-300">
+          {getInitials(member.user.email)}
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-foreground truncate">{member.user.email}</div>
+            <div className="text-[10px] text-muted-foreground font-mono mt-0.5 truncate">
+              {ro.team.userType}: {member.user.globalRole}
+            </div>
+          </div>
+          <div className="shrink-0 -mr-1">
+            {currentUser && member.userId === currentUser.id ? (
+              <span className="text-xs text-muted-foreground font-medium px-2 py-1 bg-muted rounded-md select-none inline-block">
+                {ro.team.youBadge}
+              </span>
+            ) : member.role === "OWNER" ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground/30 cursor-not-allowed"
+                disabled
+                title={ro.team.ownerRemoveAlert}
+              >
+                <ShieldAlert className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onDelete(member)}
+                className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/5 transition-colors"
+                title={ro.team.removeMember}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+        <div className="mt-2.5 flex items-center justify-between gap-2">
+          <Badge
+            variant="outline"
+            className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${getRoleBadgeStyle(member.role)}`}
+          >
+            {ro.roles[member.role] ?? member.role}
+          </Badge>
+          <span className="text-xs text-muted-foreground">{formatDate(member.user.createdAt)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TeamPage() {
   const queryClient = useQueryClient();
 
@@ -283,108 +349,146 @@ function TeamPage() {
         {/* Data Table */}
         <Card className="border-border/60 shadow-sm overflow-hidden">
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader className="bg-muted/10 border-b border-border/40">
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="pl-6 h-12 text-xs font-semibold tracking-wider text-muted-foreground/80 uppercase">{ro.team.tableMember}</TableHead>
-                    <TableHead className="h-12 text-xs font-semibold tracking-wider text-muted-foreground/80 uppercase">{ro.team.tableRole}</TableHead>
-                    <TableHead className="h-12 text-xs font-semibold tracking-wider text-muted-foreground/80 uppercase">{ro.team.tableJoined}</TableHead>
-                    <TableHead className="pr-6 h-12 text-right text-xs font-semibold tracking-wider text-muted-foreground/80 uppercase">{ro.team.tableActions}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    Array.from({ length: 3 }).map((_, idx) => (
-                      <TableRow key={idx} className="hover:bg-transparent border-b border-border/30">
-                        <TableCell className="pl-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <Skeleton className="h-9 w-9 rounded-full" />
-                            <div className="space-y-1.5">
-                              <Skeleton className="h-4 w-48" />
-                              <Skeleton className="h-3 w-20" />
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-4"><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-                        <TableCell className="py-4"><Skeleton className="h-4 w-28" /></TableCell>
-                        <TableCell className="pr-6 py-4 text-right"><Skeleton className="h-8 w-8 rounded-md ml-auto" /></TableCell>
-                      </TableRow>
-                    ))
-                  ) : members.length === 0 ? (
+            <div className="hidden md:block">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-muted/10 border-b border-border/40">
                     <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={4} className="h-32 text-center text-sm text-muted-foreground">
-                        {ro.team.noMembers}
-                      </TableCell>
+                      <TableHead className="pl-6 h-12 text-xs font-semibold tracking-wider text-muted-foreground/80 uppercase">{ro.team.tableMember}</TableHead>
+                      <TableHead className="h-12 text-xs font-semibold tracking-wider text-muted-foreground/80 uppercase">{ro.team.tableRole}</TableHead>
+                      <TableHead className="h-12 text-xs font-semibold tracking-wider text-muted-foreground/80 uppercase">{ro.team.tableJoined}</TableHead>
+                      <TableHead className="pr-6 h-12 text-right text-xs font-semibold tracking-wider text-muted-foreground/80 uppercase">{ro.team.tableActions}</TableHead>
                     </TableRow>
-                  ) : (
-                    members.map((member) => (
-                      <TableRow key={member.id} className="hover:bg-muted/10 transition-colors border-b border-border/30">
-                        {/* Member Details */}
-                        <TableCell className="pl-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-9 w-9 border border-border">
-                              <AvatarFallback className="text-xs font-semibold bg-stone-100 text-stone-700 dark:bg-stone-900 dark:text-stone-300">
-                                {getInitials(member.user.email)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-sm font-medium text-foreground truncate">{member.user.email}</span>
-                              <span className="text-[10px] text-muted-foreground font-mono mt-0.5">
-                                {ro.team.userType}: {member.user.globalRole}
-                              </span>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading ? (
+                      Array.from({ length: 3 }).map((_, idx) => (
+                        <TableRow key={idx} className="hover:bg-transparent border-b border-border/30">
+                          <TableCell className="pl-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <Skeleton className="h-9 w-9 rounded-full" />
+                              <div className="space-y-1.5">
+                                <Skeleton className="h-4 w-48" />
+                                <Skeleton className="h-3 w-20" />
+                              </div>
                             </div>
-                          </div>
-                        </TableCell>
-
-                        {/* Workspace Role */}
-                        <TableCell className="py-4">
-                          <Badge
-                            variant="outline"
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${getRoleBadgeStyle(member.role)}`}
-                          >
-                            {ro.roles[member.role] ?? member.role}
-                          </Badge>
-                        </TableCell>
-
-                        {/* Joined Date */}
-                        <TableCell className="py-4 text-xs text-muted-foreground">
-                          {formatDate(member.user.createdAt)}
-                        </TableCell>
-
-                        {/* Remove Action Button */}
-                        <TableCell className="pr-6 py-4 text-right">
-                          {currentUser && member.userId === currentUser.id ? (
-                            <span className="text-xs text-muted-foreground font-medium px-2 py-1 bg-muted rounded-md select-none inline-block">
-                              {ro.team.youBadge}
-                            </span>
-                          ) : member.role === "OWNER" ? (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground/30 cursor-not-allowed"
-                              disabled
-                              title={ro.team.ownerRemoveAlert}
-                            >
-                              <ShieldAlert className="h-4 w-4" />
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setMemberToDelete(member)}
-                              className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/5 transition-colors"
-                              title={ro.team.removeMember}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
+                          </TableCell>
+                          <TableCell className="py-4"><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
+                          <TableCell className="py-4"><Skeleton className="h-4 w-28" /></TableCell>
+                          <TableCell className="pr-6 py-4 text-right"><Skeleton className="h-8 w-8 rounded-md ml-auto" /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : members.length === 0 ? (
+                      <TableRow className="hover:bg-transparent">
+                        <TableCell colSpan={4} className="h-32 text-center text-sm text-muted-foreground">
+                          {ro.team.noMembers}
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      members.map((member) => (
+                        <TableRow key={member.id} className="hover:bg-muted/10 transition-colors border-b border-border/30">
+                          {/* Member Details */}
+                          <TableCell className="pl-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-9 w-9 border border-border">
+                                <AvatarFallback className="text-xs font-semibold bg-stone-100 text-stone-700 dark:bg-stone-900 dark:text-stone-300">
+                                  {getInitials(member.user.email)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-sm font-medium text-foreground truncate">{member.user.email}</span>
+                                <span className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                                  {ro.team.userType}: {member.user.globalRole}
+                                </span>
+                              </div>
+                            </div>
+                          </TableCell>
+
+                          {/* Workspace Role */}
+                          <TableCell className="py-4">
+                            <Badge
+                              variant="outline"
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${getRoleBadgeStyle(member.role)}`}
+                            >
+                              {ro.roles[member.role] ?? member.role}
+                            </Badge>
+                          </TableCell>
+
+                          {/* Joined Date */}
+                          <TableCell className="py-4 text-xs text-muted-foreground">
+                            {formatDate(member.user.createdAt)}
+                          </TableCell>
+
+                          {/* Remove Action Button */}
+                          <TableCell className="pr-6 py-4 text-right">
+                            {currentUser && member.userId === currentUser.id ? (
+                              <span className="text-xs text-muted-foreground font-medium px-2 py-1 bg-muted rounded-md select-none inline-block">
+                                {ro.team.youBadge}
+                              </span>
+                            ) : member.role === "OWNER" ? (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground/30 cursor-not-allowed"
+                                disabled
+                                title={ro.team.ownerRemoveAlert}
+                              >
+                                <ShieldAlert className="h-4 w-4" />
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setMemberToDelete(member)}
+                                className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/5 transition-colors"
+                                title={ro.team.removeMember}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            <div className="md:hidden divide-y divide-border/60">
+              {isLoading ? (
+                Array.from({ length: 3 }).map((_, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-4">
+                    <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 space-y-1.5 flex-1">
+                          <Skeleton className="h-4 w-2/3" />
+                          <Skeleton className="h-3 w-1/3" />
+                        </div>
+                        <Skeleton className="h-8 w-8 rounded-md shrink-0" />
+                      </div>
+                      <div className="pt-1 flex items-center justify-between gap-2">
+                        <Skeleton className="h-5 w-16 rounded-full animate-pulse" />
+                        <Skeleton className="h-4 w-24" />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : members.length === 0 ? (
+                <div className="py-12 text-center text-sm text-muted-foreground">
+                  {ro.team.noMembers}
+                </div>
+              ) : (
+                members.map((member) => (
+                  <MemberCard
+                    key={member.id}
+                    member={member}
+                    currentUser={currentUser}
+                    onDelete={setMemberToDelete}
+                  />
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
