@@ -19,6 +19,7 @@ import { ro } from "@/lib/i18n/ro";
 import { getErrorMessage } from "@/lib/i18n/getErrorMessage";
 import { toast } from "sonner";
 import { STATUS_BADGE_STYLES, isEditable, nextStatuses } from "@/lib/orderStatus";
+import { useMyRole } from "@/lib/hooks/useMyRole";
 import { OrderFormDialog } from "@/components/orders/OrderFormDialog";
 
 export const Route = createFileRoute("/orders/$id")({
@@ -48,6 +49,7 @@ function formatDate(dateStr: string): string {
 }
 
 function OrderDetail() {
+  const { isPrivileged } = useMyRole();
   const { id } = Route.useParams();
   const queryClient = useQueryClient();
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
@@ -192,16 +194,18 @@ function OrderDetail() {
             )}
           </div>
 
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setIsFormOpen(true)}
-            disabled={!isEditable(order.status)}
-            title={!isEditable(order.status) ? ro.orders.notEditableHint : undefined}
-            className={!isEditable(order.status) ? "cursor-not-allowed text-muted-foreground" : ""}
-          >
-            <Pencil className="h-4 w-4 mr-1.5" /> {ro.orders.editOrder}
-          </Button>
+          {isPrivileged && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsFormOpen(true)}
+              disabled={!isEditable(order.status)}
+              title={!isEditable(order.status) ? ro.orders.notEditableHint : undefined}
+              className={!isEditable(order.status) ? "cursor-not-allowed text-muted-foreground" : ""}
+            >
+              <Pencil className="h-4 w-4 mr-1.5" /> {ro.orders.editOrder}
+            </Button>
+          )}
 
           <Button
             size="sm"
