@@ -86,6 +86,7 @@ import {
   type Product,
 } from "@/lib/api/catalog";
 import { useTenantStore } from "@/lib/store/tenantStore";
+import { useMyRole } from "@/lib/hooks/useMyRole";
 
 export const Route = createFileRoute("/products/")({
   head: () => ({ meta: [{ title: ro.products.headTitle }] }),
@@ -156,6 +157,7 @@ interface ProductRowProps {
 }
 
 function ProductRow({ product, onEdit, onDelete }: ProductRowProps) {
+  const { isPrivileged } = useMyRole();
   const attribute = getPrimaryAttribute(product.attributes);
   const imageUrl = typeof product.attributes === 'object' && product.attributes !== null ? (product.attributes as Record<string, any>).imageUrl : null;
 
@@ -229,38 +231,41 @@ function ProductRow({ product, onEdit, onDelete }: ProductRowProps) {
       </TableCell>
 
       <TableCell className="py-3.5 text-right pr-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity data-[state=open]:opacity-100"
-              aria-label="Open row actions"
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44 text-sm border-border/60">
-            <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => onEdit(product)}>
-              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-              {ro.products.editProduct}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="gap-2 cursor-pointer text-destructive focus:text-destructive"
-              onClick={() => onDelete(product)}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              {ro.common.delete}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {isPrivileged && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity data-[state=open]:opacity-100"
+                aria-label="Open row actions"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44 text-sm border-border/60">
+              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => onEdit(product)}>
+                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                {ro.products.editProduct}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                onClick={() => onDelete(product)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                {ro.common.delete}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </TableCell>
     </TableRow>
   );
 }
 
 function ProductCard({ product, onEdit, onDelete }: ProductRowProps) {
+  const { isPrivileged } = useMyRole();
   const attribute = getPrimaryAttribute(product.attributes);
   const imageUrl =
     typeof product.attributes === "object" && product.attributes !== null
@@ -284,27 +289,29 @@ function ProductCard({ product, onEdit, onDelete }: ProductRowProps) {
             <div className="text-xs text-muted-foreground/70 truncate font-mono">{product.slug}</div>
           </div>
           {/* Actions — ALWAYS visible on mobile (no hover on touch) */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 -mr-1" aria-label="Open row actions">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44 text-sm border-border/60">
-              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => onEdit(product)}>
-                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                {ro.products.editProduct}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="gap-2 cursor-pointer text-destructive focus:text-destructive"
-                onClick={() => onDelete(product)}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                {ro.common.delete}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {isPrivileged && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 -mr-1" aria-label="Open row actions">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44 text-sm border-border/60">
+                <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => onEdit(product)}>
+                  <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                  {ro.products.editProduct}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                  onClick={() => onDelete(product)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {ro.common.delete}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           <Badge variant="secondary" className="text-[11px] font-normal px-2 py-0.5 border border-border/50">
@@ -352,6 +359,7 @@ type ProductFormValues = z.infer<typeof productSchema>;
 
 // ─── Page Component ───────────────────────────────────────────────────────────
 function ProductsPage() {
+  const { isPrivileged } = useMyRole();
   const queryClient = useQueryClient();
   const activeAdminTenant = useTenantStore((s) => s.activeAdminTenant);
 
@@ -585,10 +593,12 @@ function ProductsPage() {
               )}
             </p>
           </div>
-          <Button onClick={handleOpenCreate} className="shrink-0 gap-1.5 self-start sm:self-center">
-            <Plus className="h-4 w-4" />
-            {ro.products.createBtn}
-          </Button>
+          {isPrivileged && (
+            <Button onClick={handleOpenCreate} className="shrink-0 gap-1.5 self-start sm:self-center">
+              <Plus className="h-4 w-4" />
+              {ro.products.createBtn}
+            </Button>
+          )}
         </div>
 
         {/* Search & Filters */}

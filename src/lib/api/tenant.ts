@@ -26,6 +26,18 @@ export interface Tenant {
   updatedAt: string;
 }
 
+export type UserRole = "SUPER_ADMIN" | "OWNER" | "ADMIN" | "STAFF";
+
+export interface TenantWithRoleResponse {
+  tenant: Tenant;
+  myRole: UserRole;
+}
+
+export interface TenantWithRoleEnvelope {
+  status: string;
+  data: TenantWithRoleResponse;
+}
+
 interface TenantEnvelope {
   status: string;
   data: {
@@ -44,6 +56,16 @@ export async function fetchCurrentTenant(): Promise<Tenant> {
     "/tenants/current"
   );
   return envelope.data.tenant;
+}
+
+/**
+ * Fetch current tenant configuration along with current user's role.
+ */
+export async function fetchCurrentTenantWithRole(): Promise<TenantWithRoleResponse> {
+  const { data: envelope } = await apiClient.get<TenantWithRoleEnvelope>(
+    "/tenants/current"
+  );
+  return envelope.data;
 }
 
 /**

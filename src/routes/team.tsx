@@ -39,9 +39,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Users, UserPlus, Trash2, Mail, Eye, EyeOff, ShieldAlert, AlertCircle, Loader2, Lock } from "lucide-react";
 import { fetchTeamMembers, createTeamMember, removeTeamMember, type TenantMember } from "@/lib/api/team";
+import { useMyRole } from "@/lib/hooks/useMyRole";
 import { getCurrentUser } from "@/lib/api/auth";
 import { ro } from "@/lib/i18n/ro";
 import { getErrorMessage } from "@/lib/i18n/getErrorMessage";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/team")({
   head: () => ({ meta: [{ title: ro.team.headTitle }] }),
@@ -83,6 +91,7 @@ function MemberCard({
   currentUser?: TenantMember["user"] | null;
   onDelete: (m: TenantMember) => void;
 }) {
+  const { isPrivileged } = useMyRole();
   return (
     <div className="flex items-start gap-3 p-4">
       <Avatar className="h-10 w-10 border border-border shrink-0">
@@ -114,15 +123,17 @@ function MemberCard({
                 <ShieldAlert className="h-4 w-4" />
               </Button>
             ) : (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onDelete(member)}
-                className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/5 transition-colors"
-                title={ro.team.removeMember}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              isPrivileged && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onDelete(member)}
+                  className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/5 transition-colors"
+                  title={ro.team.removeMember}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )
             )}
           </div>
         </div>
@@ -141,6 +152,7 @@ function MemberCard({
 }
 
 function TeamPage() {
+  const { isPrivileged } = useMyRole();
   const queryClient = useQueryClient();
 
   // Dialog & Modal State
@@ -150,6 +162,7 @@ function TeamPage() {
   // Add Account Form State
   const [addEmail, setAddEmail] = useState("");
   const [addPassword, setAddPassword] = useState("");
+  const [addRole, setAddRole] = useState<"ADMIN" | "STAFF">("ADMIN");
   const [showPassword, setShowPassword] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -183,7 +196,7 @@ function TeamPage() {
       const result = await createTeamMember({
         email: addEmail.trim(),
         password: addPassword,
-        role: "ADMIN",
+        role: addRole,
       });
 
       if (result.addedExisting) {
@@ -198,6 +211,7 @@ function TeamPage() {
       // Reset form
       setAddEmail("");
       setAddPassword("");
+      setAddRole("ADMIN");
       setShowPassword(false);
       setIsAddOpen(false);
     } catch (err: any) {
@@ -234,105 +248,131 @@ function TeamPage() {
           </div>
 
           {/* Add Account Dialog */}
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger asChild>
-              <Button className="h-10 px-4 font-medium flex items-center gap-2">
-                <UserPlus className="h-4 w-4" />
-                {ro.team.addAccount}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <form onSubmit={handleAddSubmit}>
-                <DialogHeader className="gap-1">
-                  <DialogTitle className="text-lg">{ro.team.addAccount}</DialogTitle>
-                  <DialogDescription className="text-xs">
-                    {ro.team.fullAccessNote}
-                  </DialogDescription>
-                </DialogHeader>
+          {isPrivileged && (
+            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+              <DialogTrigger asChild>
+                <Button className="h-10 px-4 font-medium flex items-center gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  {ro.team.addAccount}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <form onSubmit={handleAddSubmit}>
+                  <DialogHeader className="gap-1">
+                    <DialogTitle className="text-lg">{ro.team.addAccount}</DialogTitle>
+                    <DialogDescription className="text-xs">
+                      {addRole === "ADMIN" ? ro.team.fullAccessNote : ro.team.limitedAccessNote}
+                    </DialogDescription>
+                  </DialogHeader>
 
-                <div className="grid gap-4 py-5">
-                  {/* Email */}
-                  <div className="grid gap-2">
-                    <Label htmlFor="add-email" className="text-xs font-semibold text-muted-foreground">
-                      {ro.team.emailLabel}
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
-                      <Input
-                        id="add-email"
-                        type="email"
-                        placeholder={ro.team.emailPlaceholder}
-                        className="pl-9 h-11 border-border/70 text-sm"
-                        value={addEmail}
-                        onChange={(e) => setAddEmail(e.target.value)}
-                        required
-                        disabled={isAdding}
-                      />
+                  <div className="grid gap-4 py-5">
+                    {/* Email */}
+                    <div className="grid gap-2">
+                      <Label htmlFor="add-email" className="text-xs font-semibold text-muted-foreground">
+                        {ro.team.emailLabel}
+                      </Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+                        <Input
+                          id="add-email"
+                          type="email"
+                          placeholder={ro.team.emailPlaceholder}
+                          className="pl-9 h-11 border-border/70 text-sm"
+                          value={addEmail}
+                          onChange={(e) => setAddEmail(e.target.value)}
+                          required
+                          disabled={isAdding}
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Password */}
-                  <div className="grid gap-2">
-                    <Label htmlFor="add-password" className="text-xs font-semibold text-muted-foreground">
-                      {ro.team.passwordLabel}
-                    </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
-                      <Input
-                        id="add-password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        className="pl-9 pr-10 h-11 border-border/70 text-sm"
-                        value={addPassword}
-                        onChange={(e) => setAddPassword(e.target.value)}
-                        required
+                    {/* Password */}
+                    <div className="grid gap-2">
+                      <Label htmlFor="add-password" className="text-xs font-semibold text-muted-foreground">
+                        {ro.team.passwordLabel}
+                      </Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+                        <Input
+                          id="add-password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          className="pl-9 pr-10 h-11 border-border/70 text-sm"
+                          value={addPassword}
+                          onChange={(e) => setAddPassword(e.target.value)}
+                          required
+                          disabled={isAdding}
+                          minLength={8}
+                        />
+                        <button
+                          type="button"
+                          tabIndex={-1}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors"
+                          onClick={() => setShowPassword((v) => !v)}
+                          aria-label={showPassword ? ro.auth.hidePassword : ro.auth.showPassword}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        {addRole === "ADMIN" ? ro.team.fullAccessNote : ro.team.limitedAccessNote}
+                      </p>
+                    </div>
+
+                    {/* Rol (Role Select) */}
+                    <div className="grid gap-2">
+                      <Label htmlFor="add-role" className="text-xs font-semibold text-muted-foreground">
+                        Rol
+                      </Label>
+                      <Select
+                        value={addRole}
+                        onValueChange={(value) => setAddRole(value as "ADMIN" | "STAFF")}
                         disabled={isAdding}
-                        minLength={8}
-                      />
-                      <button
-                        type="button"
-                        tabIndex={-1}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors"
-                        onClick={() => setShowPassword((v) => !v)}
-                        aria-label={showPassword ? ro.auth.hidePassword : ro.auth.showPassword}
                       >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
+                        <SelectTrigger id="add-role" className="h-11 border-border/70 text-sm text-left">
+                          <SelectValue placeholder="Selectează un rol" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ADMIN">
+                            Administrator (acces complet)
+                          </SelectItem>
+                          <SelectItem value="STAFF">
+                            Staff (acces limitat)
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      {ro.team.fullAccessNote}
-                    </p>
                   </div>
-                </div>
 
-                <DialogFooter className="mt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsAddOpen(false)}
-                    disabled={isAdding}
-                    className="h-11"
-                  >
-                    {ro.common.cancel}
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isAdding}
-                    className="h-11 px-6"
-                  >
-                    {isAdding ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {ro.team.inviting}
-                      </>
-                    ) : (
-                      ro.team.addAccount
-                    )}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  <DialogFooter className="mt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsAddOpen(false)}
+                      disabled={isAdding}
+                      className="h-11"
+                    >
+                      {ro.common.cancel}
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isAdding}
+                      className="h-11 px-6"
+                    >
+                      {isAdding ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          {ro.team.inviting}
+                        </>
+                      ) : (
+                        ro.team.addAccount
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
         {/* Error state */}
@@ -436,15 +476,17 @@ function TeamPage() {
                                 <ShieldAlert className="h-4 w-4" />
                               </Button>
                             ) : (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setMemberToDelete(member)}
-                                className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/5 transition-colors"
-                                title={ro.team.removeMember}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              isPrivileged && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setMemberToDelete(member)}
+                                  className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/5 transition-colors"
+                                  title={ro.team.removeMember}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )
                             )}
                           </TableCell>
                         </TableRow>

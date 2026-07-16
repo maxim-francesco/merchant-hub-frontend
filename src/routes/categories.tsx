@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { fetchCategories, createCategory, updateCategory, deleteCategory } from "@/lib/api/catalog";
 import { useTenantStore } from "@/lib/store/tenantStore";
+import { useMyRole } from "@/lib/hooks/useMyRole";
 
 export const Route = createFileRoute("/categories")({
   head: () => ({ meta: [{ title: ro.categories.headTitle }] }),
@@ -79,6 +80,7 @@ function getCategoryAttributes(c: any): string[] {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 function CategoriesPage() {
+  const { isPrivileged } = useMyRole();
   const queryClient = useQueryClient();
   const activeAdminTenant = useTenantStore((s) => s.activeAdminTenant);
 
@@ -183,19 +185,21 @@ function CategoriesPage() {
             <h1 className="text-2xl font-semibold tracking-tight">{ro.categories.title}</h1>
             <p className="text-sm text-muted-foreground">{ro.categories.subtitle}</p>
           </div>
-          <Button
-            onClick={() => {
-              setEditingId(null);
-              form.reset({ name: "" });
-              setAttrs([]);
-              setIsModalOpen(true);
-            }}
-            className="shrink-0 gap-1.5 self-start sm:self-center"
-            disabled={!activeAdminTenant}
-          >
-            <Plus className="h-4 w-4" />
-            {ro.categories.createBtn}
-          </Button>
+          {isPrivileged && (
+            <Button
+              onClick={() => {
+                setEditingId(null);
+                form.reset({ name: "" });
+                setAttrs([]);
+                setIsModalOpen(true);
+              }}
+              className="shrink-0 gap-1.5 self-start sm:self-center"
+              disabled={!activeAdminTenant}
+            >
+              <Plus className="h-4 w-4" />
+              {ro.categories.createBtn}
+            </Button>
+          )}
         </div>
 
         {/* Categories List Container */}
@@ -233,35 +237,37 @@ function CategoriesPage() {
                         {c._count?.products ?? 0} {c._count?.products === 1 ? ro.common.product : ro.common.products}
                       </div>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 -mr-1" aria-label="Open category actions">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-44 text-sm border-border/60">
-                        <DropdownMenuItem
-                          className="gap-2 cursor-pointer"
-                          onClick={() => {
-                            setEditingId(c.id);
-                            form.setValue("name", c.name, { shouldValidate: true });
-                            setAttrs(getCategoryAttributes(c));
-                            setIsModalOpen(true);
-                          }}
-                        >
-                          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                          {ro.common.edit}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="gap-2 cursor-pointer text-destructive focus:text-destructive"
-                          onClick={() => setCategoryToDelete(c.id)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          {ro.common.delete}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {isPrivileged && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 -mr-1" aria-label="Open category actions">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44 text-sm border-border/60">
+                          <DropdownMenuItem
+                            className="gap-2 cursor-pointer"
+                            onClick={() => {
+                              setEditingId(c.id);
+                              form.setValue("name", c.name, { shouldValidate: true });
+                              setAttrs(getCategoryAttributes(c));
+                              setIsModalOpen(true);
+                            }}
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                            {ro.common.edit}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                            onClick={() => setCategoryToDelete(c.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            {ro.common.delete}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                   {getCategoryAttributes(c).length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-3">

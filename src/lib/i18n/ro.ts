@@ -212,6 +212,7 @@ export const ro = {
     emailPlaceholder: "colaborator@companie.com",
     passwordLabel: "Parolă",
     fullAccessNote: "Contul va avea acces complet.",
+    limitedAccessNote: "Staff are acces limitat.",
     accountCreated: "Contul a fost creat.",
     existingUserAdded: "Există deja un cont cu acest email (posibil folosit la alt magazin). L-am adăugat la magazinul tău, dar parola NU a fost modificată — contul își păstrează parola existentă.",
     removeMember: "Elimină",

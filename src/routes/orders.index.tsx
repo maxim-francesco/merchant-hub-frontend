@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { fetchOrders, downloadOrderInvoice, updateOrderStatus, type Order } from "@/lib/api/orders";
 import { useTenantStore } from "@/lib/store/tenantStore";
+import { useMyRole } from "@/lib/hooks/useMyRole";
 import { ro } from "@/lib/i18n/ro";
 import { getErrorMessage } from "@/lib/i18n/getErrorMessage";
 import {
@@ -133,6 +134,7 @@ function OrderCard({ order, onSelect }: { order: Order; onSelect: (o: Order) => 
 // ─── Orders Page Component ────────────────────────────────────────────────────
 
 function OrdersPage() {
+  const { isPrivileged } = useMyRole();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -192,10 +194,12 @@ function OrdersPage() {
               )}
             </p>
           </div>
-          <Button onClick={() => setIsFormOpen(true)} className="gap-1.5 h-10 px-4 rounded-xl shrink-0">
-            <Plus className="h-4 w-4" />
-            {ro.orders.newOrder}
-          </Button>
+          {isPrivileged && (
+            <Button onClick={() => setIsFormOpen(true)} className="gap-1.5 h-10 px-4 rounded-xl shrink-0">
+              <Plus className="h-4 w-4" />
+              {ro.orders.newOrder}
+            </Button>
+          )}
         </div>
 
         {/* Search & Filters */}
