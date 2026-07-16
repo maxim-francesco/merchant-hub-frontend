@@ -444,6 +444,18 @@ function OrdersPage() {
                     <span className="text-muted-foreground">{ro.orders.custEmail}</span>
                     <span className="font-medium text-foreground truncate max-w-[200px]">{selectedOrder.customerEmail}</span>
                   </div>
+                  {selectedOrder.phone && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Telefon</span>
+                      <span className="font-medium text-foreground">{selectedOrder.phone}</span>
+                    </div>
+                  )}
+                  {selectedOrder.deliveryAddress && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Adresă de livrare</span>
+                      <span className="font-medium text-foreground truncate max-w-[200px]" title={selectedOrder.deliveryAddress}>{selectedOrder.deliveryAddress}</span>
+                    </div>
+                  )}
                   {selectedOrder.customerType === "B2B" && (
                     <>
                       <div className="flex justify-between">

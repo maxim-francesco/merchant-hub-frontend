@@ -25,6 +25,8 @@ export interface Order {
   tenantId: string;
   customerName: string;
   customerEmail: string;
+  phone: string | null;
+  deliveryAddress: string | null;
   totalAmount: string; // Decimal returned as string
   status: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
   createdAt: string;
@@ -48,6 +50,8 @@ export interface OrderInput {
   companyName?: string;
   cui?: string;
   regCom?: string;
+  phone?: string;
+  deliveryAddress?: string;
   items: OrderInputItem[];
 }
 

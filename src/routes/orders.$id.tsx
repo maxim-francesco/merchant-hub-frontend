@@ -342,6 +342,18 @@ function OrderDetail() {
                   {order.customerEmail}
                 </div>
               </div>
+              {order.phone && (
+                <div className="grid gap-1 border-t pt-2">
+                  <div className="text-xs text-muted-foreground">Telefon</div>
+                  <div className="font-medium">{order.phone}</div>
+                </div>
+              )}
+              {order.deliveryAddress && (
+                <div className="grid gap-1 border-t pt-2">
+                  <div className="text-xs text-muted-foreground">Adresă de livrare</div>
+                  <div className="font-medium">{order.deliveryAddress}</div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

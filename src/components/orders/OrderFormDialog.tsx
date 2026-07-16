@@ -65,6 +65,8 @@ export function OrderFormDialog({
   // Form states
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
   const [customerType, setCustomerType] = useState<"B2C" | "B2B">("B2C");
   const [companyName, setCompanyName] = useState("");
   const [cui, setCui] = useState("");
@@ -84,6 +86,8 @@ export function OrderFormDialog({
       if (mode === "edit" && initialOrder) {
         setCustomerName(initialOrder.customerName || "");
         setCustomerEmail(initialOrder.customerEmail || "");
+        setPhone(initialOrder.phone || "");
+        setDeliveryAddress(initialOrder.deliveryAddress || "");
         setCustomerType(initialOrder.customerType || "B2C");
         setCompanyName(initialOrder.companyName || "");
         setCui(initialOrder.cui || "");
@@ -97,6 +101,8 @@ export function OrderFormDialog({
       } else {
         setCustomerName("");
         setCustomerEmail("");
+        setPhone("");
+        setDeliveryAddress("");
         setCustomerType("B2C");
         setCompanyName("");
         setCui("");
@@ -195,6 +201,68 @@ export function OrderFormDialog({
       return;
     }
 
+    const trimmedPhone = phone.trim();
+    const trimmedAddress = deliveryAddress.trim();
+
+    if (mode === "create") {
+      if (!trimmedPhone) {
+        toast.error("Numărul de telefon este obligatoriu.");
+        return;
+      }
+      if (trimmedPhone.length < 7) {
+        toast.error("Phone number is too short.");
+        return;
+      }
+      if (trimmedPhone.length > 30) {
+        toast.error("Phone number is too long.");
+        return;
+      }
+      if (!/^[0-9+()\s-]+$/.test(trimmedPhone)) {
+        toast.error("Phone number contains invalid characters.");
+        return;
+      }
+
+      if (!trimmedAddress) {
+        toast.error("Adresa de livrare este obligatorie.");
+        return;
+      }
+      if (trimmedAddress.length < 5) {
+        toast.error("Delivery address is too short.");
+        return;
+      }
+      if (trimmedAddress.length > 250) {
+        toast.error("Delivery address is too long.");
+        return;
+      }
+    } else {
+      // mode === "edit"
+      if (trimmedPhone !== "") {
+        if (trimmedPhone.length < 7) {
+          toast.error("Phone number is too short.");
+          return;
+        }
+        if (trimmedPhone.length > 30) {
+          toast.error("Phone number is too long.");
+          return;
+        }
+        if (!/^[0-9+()\s-]+$/.test(trimmedPhone)) {
+          toast.error("Phone number contains invalid characters.");
+          return;
+        }
+      }
+
+      if (trimmedAddress !== "") {
+        if (trimmedAddress.length < 5) {
+          toast.error("Delivery address is too short.");
+          return;
+        }
+        if (trimmedAddress.length > 250) {
+          toast.error("Delivery address is too long.");
+          return;
+        }
+      }
+    }
+
     const payload: OrderInput = {
       customerName: customerName.trim(),
       customerEmail: customerEmail.trim(),
@@ -202,6 +270,8 @@ export function OrderFormDialog({
       companyName: customerType === "B2B" ? companyName.trim() : undefined,
       cui: customerType === "B2B" ? cui.trim() : undefined,
       regCom: customerType === "B2B" && regCom.trim() ? regCom.trim() : undefined,
+      phone: trimmedPhone !== "" ? trimmedPhone : undefined,
+      deliveryAddress: trimmedAddress !== "" ? trimmedAddress : undefined,
       items: validItems,
     };
 
@@ -278,6 +348,33 @@ export function OrderFormDialog({
                 onChange={(e) => setCustomerEmail(e.target.value)}
                 placeholder={ro.orders.custEmailPlaceholder}
                 required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-1.5">
+              <Label htmlFor="phone" className="text-xs font-semibold">
+                Telefon {mode === "create" && "*"}
+              </Label>
+              <Input
+                id="phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="ex. 0740123456"
+                required={mode === "create"}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="deliveryAddress" className="text-xs font-semibold">
+                Adresă de livrare {mode === "create" && "*"}
+              </Label>
+              <Input
+                id="deliveryAddress"
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+                placeholder="ex. Strada Florilor 12, Cluj-Napoca"
+                required={mode === "create"}
               />
             </div>
           </div>
