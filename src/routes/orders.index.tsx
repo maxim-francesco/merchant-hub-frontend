@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -48,7 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { STATUS_BADGE_STYLES, nextStatuses } from "@/lib/orderStatus";
+import { STATUS_BADGE_STYLES, nextStatuses, ORDER_STATUSES, type OrderStatus } from "@/lib/orderStatus";
 import { OrderFormDialog } from "@/components/orders/OrderFormDialog";
 
 export const Route = createFileRoute("/orders/")({
@@ -139,6 +139,9 @@ function OrdersPage() {
   const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<OrderStatus | "all">("all");
+
   const queryClient = useQueryClient();
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: Order["status"] }) =>
@@ -178,6 +181,19 @@ function OrdersPage() {
     enabled: !!activeAdminTenant?.id,
   });
 
+  const filteredOrders = useMemo(() => {
+    if (!orders) return orders;
+    return orders.filter((order) => {
+      const q = searchQuery.trim().toLowerCase();
+      const matchesSearch = !q ||
+        order.customerName.toLowerCase().includes(q) ||
+        order.customerEmail.toLowerCase().includes(q) ||
+        order.id.toLowerCase().includes(q);
+      const matchesStatus = selectedStatus === "all" || order.status === selectedStatus;
+      return matchesSearch && matchesStatus;
+    });
+  }, [orders, searchQuery, selectedStatus]);
+
   return (
     <AdminLayout>
       <div className="flex flex-col gap-4">
@@ -208,13 +224,25 @@ function OrdersPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
             <Input
               placeholder={ro.orders.searchPlaceholder}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 h-10 bg-background border-border/70 focus-visible:ring-1"
             />
           </div>
-          <Button variant="outline" className="h-10 gap-2 text-sm">
-            <SlidersHorizontal className="h-4 w-4" />
-            {ro.orders.filters}
-          </Button>
+          <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as OrderStatus | "all")}>
+            <SelectTrigger className="w-full sm:w-[180px] h-10 border-border/70 text-sm gap-2">
+              <SlidersHorizontal className="h-4 w-4 text-muted-foreground/60 shrink-0" />
+              <SelectValue placeholder={ro.orders.filters} />
+            </SelectTrigger>
+            <SelectContent className="border-border/60">
+              <SelectItem value="all">Toate statusurile</SelectItem>
+              {ORDER_STATUSES.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {ro.statuses[status] || status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Error banner */}
@@ -261,7 +289,7 @@ function OrdersPage() {
                     {isLoading && <SkeletonRows />}
 
                     {/* Orders rows */}
-                    {orders?.map((order) => (
+                    {filteredOrders?.map((order) => (
                       <TableRow
                         key={order.id}
                         onClick={() => setSelectedOrder(order)}
@@ -298,6 +326,22 @@ function OrdersPage() {
                         </TableCell>
                       </TableRow>
                     ))}
+
+                    {/* Filter empty state */}
+                    {!isLoading && !isError && orders && orders.length > 0 && filteredOrders?.length === 0 && (
+                      <TableRow className="hover:bg-transparent">
+                        <TableCell
+                          colSpan={5}
+                          className="py-16 text-center text-muted-foreground"
+                        >
+                          <ShoppingBag className="h-8 w-8 mx-auto mb-3 opacity-30" />
+                          <p className="text-sm font-medium">Niciun rezultat</p>
+                          <p className="text-xs mt-1 opacity-70">
+                            Nu am găsit comenzi care să corespundă filtrelor selectate.
+                          </p>
+                        </TableCell>
+                      </TableRow>
+                    )}
 
                     {/* Empty state */}
                     {!isLoading && !isError && orders?.length === 0 && (
@@ -352,9 +396,19 @@ function OrdersPage() {
                 </div>
               )}
 
-              {!isLoading && orders && orders.length > 0 && (
+              {!isLoading && !isError && orders && orders.length > 0 && filteredOrders?.length === 0 && (
+                <div className="py-12 text-center text-muted-foreground">
+                  <ShoppingBag className="h-8 w-8 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm font-medium">Niciun rezultat</p>
+                  <p className="text-xs mt-1 opacity-70">
+                    Nu am găsit comenzi care să corespundă filtrelor selectate.
+                  </p>
+                </div>
+              )}
+
+              {!isLoading && filteredOrders && filteredOrders.length > 0 && (
                 <div className="divide-y divide-border/60">
-                  {orders.map((order) => (
+                  {filteredOrders.map((order) => (
                     <OrderCard key={order.id} order={order} onSelect={setSelectedOrder} />
                   ))}
                 </div>

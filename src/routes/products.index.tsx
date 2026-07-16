@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -363,6 +363,9 @@ function ProductsPage() {
   const queryClient = useQueryClient();
   const activeAdminTenant = useTenantStore((s) => s.activeAdminTenant);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCategoryId, setFilterCategoryId] = useState<string>("all");
+
   // Modal and CRUD states
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -408,6 +411,16 @@ function ProductsPage() {
     queryFn: fetchCategories,
     enabled: !!activeAdminTenant?.id,
   });
+
+  const filteredProducts = useMemo(() => {
+    if (!products) return products;
+    return products.filter((product) => {
+      const q = searchQuery.trim().toLowerCase();
+      const matchesSearch = !q || product.name.toLowerCase().includes(q) || product.slug.toLowerCase().includes(q);
+      const matchesCategory = filterCategoryId === "all" || product.category.id === filterCategoryId;
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, searchQuery, filterCategoryId]);
 
   // Watchers
   const selectedCategoryId = form.watch("categoryId");
@@ -607,13 +620,25 @@ function ProductsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
             <Input
               placeholder={ro.products.searchPlaceholder}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 h-10 bg-background border-border/70 focus-visible:ring-1"
             />
           </div>
-          <Button variant="outline" className="h-10 gap-2 text-sm">
-            <SlidersHorizontal className="h-4 w-4" />
-            {ro.products.filters}
-          </Button>
+          <Select value={filterCategoryId} onValueChange={setFilterCategoryId}>
+            <SelectTrigger className="w-full sm:w-[180px] h-10 border-border/70 text-sm gap-2">
+              <SlidersHorizontal className="h-4 w-4 text-muted-foreground/60 shrink-0" />
+              <SelectValue placeholder={ro.products.filters} />
+            </SelectTrigger>
+            <SelectContent className="border-border/60">
+              <SelectItem value="all">Toate categoriile</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.id}>
+                  {cat.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Error banner */}
@@ -658,7 +683,7 @@ function ProductsPage() {
                     {isLoading && <SkeletonRows />}
 
                     {!isLoading &&
-                      products?.map((product) => (
+                      filteredProducts?.map((product) => (
                         <ProductRow
                           key={product.id}
                           product={product}
@@ -666,6 +691,18 @@ function ProductsPage() {
                           onDelete={setProductToDelete}
                         />
                       ))}
+
+                    {!isLoading && !isError && products && products.length > 0 && filteredProducts?.length === 0 && (
+                      <TableRow className="hover:bg-transparent">
+                        <TableCell colSpan={6} className="py-16 text-center text-muted-foreground">
+                          <Package className="h-8 w-8 mx-auto mb-3 opacity-30" />
+                          <p className="text-sm font-medium">Niciun rezultat</p>
+                          <p className="text-xs mt-1 opacity-70">
+                            Nu am găsit produse care să corespundă filtrelor selectate.
+                          </p>
+                        </TableCell>
+                      </TableRow>
+                    )}
 
                     {!isLoading && !isError && products?.length === 0 && (
                       <TableRow className="hover:bg-transparent">
@@ -709,9 +746,19 @@ function ProductsPage() {
                 </div>
               )}
 
-              {!isLoading && products && products.length > 0 && (
+              {!isLoading && !isError && products && products.length > 0 && filteredProducts?.length === 0 && (
+                <div className="py-12 text-center text-muted-foreground">
+                  <Package className="h-8 w-8 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm font-medium">Niciun rezultat</p>
+                  <p className="text-xs mt-1 opacity-70">
+                    Nu am găsit produse care să corespundă filtrelor selectate.
+                  </p>
+                </div>
+              )}
+
+              {!isLoading && filteredProducts && filteredProducts.length > 0 && (
                 <div className="divide-y divide-border/60">
-                  {products.map((product) => (
+                  {filteredProducts.map((product) => (
                     <ProductCard
                       key={product.id}
                       product={product}
