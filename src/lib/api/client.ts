@@ -6,7 +6,7 @@ import { useTenantStore } from "../store/tenantStore";
  * Automatically attaches the JWT token from localStorage on every request.
  */
 const apiClient = axios.create({
-  baseURL: "http://localhost:5000/api/v1",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1",
   headers: {
     "Content-Type": "application/json",
   },
