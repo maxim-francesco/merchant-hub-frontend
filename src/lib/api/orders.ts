@@ -28,7 +28,8 @@ export interface Order {
   phone: string | null;
   deliveryAddress: string | null;
   totalAmount: string; // Decimal returned as string
-  status: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+  status: "PENDING" | "CONFIRMED" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+  paymentMethod: "ramburs" | "card" | null;
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];

@@ -18,7 +18,7 @@ import { fetchOrderById, updateOrderStatus, downloadOrderInvoice, type Order } f
 import { ro } from "@/lib/i18n/ro";
 import { getErrorMessage } from "@/lib/i18n/getErrorMessage";
 import { toast } from "sonner";
-import { STATUS_BADGE_STYLES, isEditable, nextStatuses } from "@/lib/orderStatus";
+import { STATUS_BADGE_STYLES, isEditable, nextStatuses, PAYMENT_METHOD_BADGE_STYLES } from "@/lib/orderStatus";
 import { useMyRole } from "@/lib/hooks/useMyRole";
 import { OrderFormDialog } from "@/components/orders/OrderFormDialog";
 
@@ -356,6 +356,19 @@ function OrderDetail() {
                 <div className="grid gap-1 border-t pt-2">
                   <div className="text-xs text-muted-foreground">Adresă de livrare</div>
                   <div className="font-medium">{order.deliveryAddress}</div>
+                </div>
+              )}
+              {order.paymentMethod && (
+                <div className="grid gap-1.5 border-t pt-2">
+                  <div className="text-xs text-muted-foreground">{ro.orders.paymentMethod}</div>
+                  <Badge
+                    variant="outline"
+                    className={`w-fit text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border ${
+                      PAYMENT_METHOD_BADGE_STYLES[order.paymentMethod]
+                    }`}
+                  >
+                    {order.paymentMethod === "ramburs" ? ro.orders.paymentRamburs : ro.orders.paymentCard}
+                  </Badge>
                 </div>
               )}
             </CardContent>

@@ -83,7 +83,7 @@ function Dashboard() {
   // Calculate dynamic metrics
   const totalSalesCount = analytics?.totalSalesCount ?? 0;
   const totalRevenue = analytics?.totalRevenue ?? 0;
-  const activeOrdersCount = orders?.filter(o => o.status === "PENDING" || o.status === "PAID").length ?? 0;
+  const activeOrdersCount = orders?.filter(o => o.status === "PENDING" || o.status === "CONFIRMED" || o.status === "PAID").length ?? 0;
 
   // Static/Calculated metrics card list
   const metricsCards = [

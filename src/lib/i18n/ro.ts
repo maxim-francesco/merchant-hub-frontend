@@ -169,6 +169,9 @@ export const ro = {
     orderNotFound: "Comanda nu a fost găsită.",
     backToOrders: "Înapoi la comenzi",
     placedOn: "Plasată pe",
+    paymentMethod: "Metodă de plată",
+    paymentRamburs: "Ramburs",
+    paymentCard: "Card",
     changeStatus: "Schimbă statusul",
     generateAwb: "Generează AWB",
     qty: "Cantitate",
@@ -289,6 +292,7 @@ export const ro = {
   },
   statuses: {
     PENDING: "În așteptare",
+    CONFIRMED: "Confirmată",
     PAID: "Plătită",
     SHIPPED: "Expediată",
     DELIVERED: "Livrată",

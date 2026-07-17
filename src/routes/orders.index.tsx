@@ -48,7 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { STATUS_BADGE_STYLES, nextStatuses, ORDER_STATUSES, type OrderStatus } from "@/lib/orderStatus";
+import { STATUS_BADGE_STYLES, nextStatuses, ORDER_STATUSES, PAYMENT_METHOD_BADGE_STYLES, type OrderStatus } from "@/lib/orderStatus";
 import { OrderFormDialog } from "@/components/orders/OrderFormDialog";
 
 export const Route = createFileRoute("/orders/")({
@@ -112,12 +112,22 @@ function OrderCard({ order, onSelect }: { order: Order; onSelect: (o: Order) => 
         <span className="font-mono text-xs font-semibold text-foreground/80">
           #{order.id.slice(0, 8).toUpperCase()}
         </span>
-        <Badge
-          variant="outline"
-          className={`text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border ${STATUS_BADGE_STYLES[order.status]}`}
-        >
-          {ro.statuses[order.status]}
-        </Badge>
+        <div className="flex items-center gap-1.5">
+          <Badge
+            variant="outline"
+            className={`text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border ${STATUS_BADGE_STYLES[order.status]}`}
+          >
+            {ro.statuses[order.status]}
+          </Badge>
+          {order.paymentMethod && (
+            <Badge
+              variant="outline"
+              className={`text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border ${PAYMENT_METHOD_BADGE_STYLES[order.paymentMethod]}`}
+            >
+              {order.paymentMethod === "ramburs" ? ro.orders.paymentRamburs : ro.orders.paymentCard}
+            </Badge>
+          )}
+        </div>
       </div>
       <div className="min-w-0">
         <div className="text-sm font-medium text-foreground truncate">{order.customerName}</div>
@@ -315,14 +325,26 @@ function OrdersPage() {
                           {fmtPrice(order.totalAmount)}
                         </TableCell>
                         <TableCell className="py-3.5 pr-5">
-                          <Badge
-                            variant="outline"
-                            className={`text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border ${
-                              STATUS_BADGE_STYLES[order.status]
-                            }`}
-                          >
-                            {ro.statuses[order.status]}
-                          </Badge>
+                          <div className="flex items-center gap-1.5">
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border ${
+                                STATUS_BADGE_STYLES[order.status]
+                              }`}
+                            >
+                              {ro.statuses[order.status]}
+                            </Badge>
+                            {order.paymentMethod && (
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border ${
+                                  PAYMENT_METHOD_BADGE_STYLES[order.paymentMethod]
+                                }`}
+                              >
+                                {order.paymentMethod === "ramburs" ? ro.orders.paymentRamburs : ro.orders.paymentCard}
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -531,6 +553,14 @@ function OrdersPage() {
                         </div>
                       )}
                     </>
+                  )}
+                  {selectedOrder.paymentMethod && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{ro.orders.paymentMethod}</span>
+                      <span className="font-medium text-foreground">
+                        {selectedOrder.paymentMethod === "ramburs" ? ro.orders.paymentRamburs : ro.orders.paymentCard}
+                      </span>
+                    </div>
                   )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{ro.orders.placedAt}</span>
