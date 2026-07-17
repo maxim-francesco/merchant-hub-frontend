@@ -95,6 +95,7 @@ function SkeletonRows() {
             </div>
           </TableCell>
           <TableCell className="text-right"><Skeleton className="h-4 w-16 ml-auto" /></TableCell>
+          <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
           <TableCell className="pr-5"><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
         </TableRow>
       ))}
@@ -115,18 +116,10 @@ function OrderCard({ order, onSelect }: { order: Order; onSelect: (o: Order) => 
         <div className="flex items-center gap-1.5">
           <Badge
             variant="outline"
-            className={`text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border ${STATUS_BADGE_STYLES[order.status]}`}
+            className={`text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border whitespace-nowrap ${STATUS_BADGE_STYLES[order.status]}`}
           >
             {ro.statuses[order.status]}
           </Badge>
-          {order.paymentMethod && (
-            <Badge
-              variant="outline"
-              className={`text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border ${PAYMENT_METHOD_BADGE_STYLES[order.paymentMethod]}`}
-            >
-              {order.paymentMethod === "ramburs" ? ro.orders.paymentRamburs : ro.orders.paymentCard}
-            </Badge>
-          )}
         </div>
       </div>
       <div className="min-w-0">
@@ -134,7 +127,17 @@ function OrderCard({ order, onSelect }: { order: Order; onSelect: (o: Order) => 
         <div className="text-xs text-muted-foreground/60 truncate">{order.customerEmail}</div>
       </div>
       <div className="flex items-center justify-between gap-2 pt-0.5">
-        <span className="text-xs text-muted-foreground/90">{formatDate(order.createdAt)}</span>
+        <div className="flex items-center gap-2">
+          {order.paymentMethod && (
+            <Badge
+              variant="outline"
+              className={`text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border whitespace-nowrap ${PAYMENT_METHOD_BADGE_STYLES[order.paymentMethod]}`}
+            >
+              {order.paymentMethod === "ramburs" ? ro.orders.paymentRamburs : ro.orders.paymentCard}
+            </Badge>
+          )}
+          <span className="text-xs text-muted-foreground/90">{formatDate(order.createdAt)}</span>
+        </div>
         <span className="text-sm font-semibold text-foreground tabular-nums">{fmtPrice(order.totalAmount)}</span>
       </div>
     </div>
@@ -289,6 +292,9 @@ function OrdersPage() {
                       <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 text-right">
                         {ro.orders.tableTotal}
                       </TableHead>
+                      <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 w-[110px]">
+                        {ro.orders.tablePayment}
+                      </TableHead>
                       <TableHead className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground py-3 pr-5 w-[140px]">
                         {ro.orders.tableStatus}
                       </TableHead>
@@ -324,27 +330,27 @@ function OrdersPage() {
                         <TableCell className="py-3.5 text-right font-medium text-sm tabular-nums">
                           {fmtPrice(order.totalAmount)}
                         </TableCell>
-                        <TableCell className="py-3.5 pr-5">
-                          <div className="flex items-center gap-1.5">
+                        <TableCell className="py-3.5">
+                          {order.paymentMethod ? (
                             <Badge
                               variant="outline"
-                              className={`text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border ${
-                                STATUS_BADGE_STYLES[order.status]
-                              }`}
+                              className={`text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border whitespace-nowrap ${PAYMENT_METHOD_BADGE_STYLES[order.paymentMethod]}`}
                             >
-                              {ro.statuses[order.status]}
+                              {order.paymentMethod === "ramburs" ? ro.orders.paymentRamburs : ro.orders.paymentCard}
                             </Badge>
-                            {order.paymentMethod && (
-                              <Badge
-                                variant="outline"
-                                className={`text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border ${
-                                  PAYMENT_METHOD_BADGE_STYLES[order.paymentMethod]
-                                }`}
-                              >
-                                {order.paymentMethod === "ramburs" ? ro.orders.paymentRamburs : ro.orders.paymentCard}
-                              </Badge>
-                            )}
-                          </div>
+                          ) : (
+                            <span className="text-muted-foreground/40 text-xs">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-3.5 pr-5">
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 border whitespace-nowrap ${
+                              STATUS_BADGE_STYLES[order.status]
+                            }`}
+                          >
+                            {ro.statuses[order.status]}
+                          </Badge>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -353,7 +359,7 @@ function OrdersPage() {
                     {!isLoading && !isError && orders && orders.length > 0 && filteredOrders?.length === 0 && (
                       <TableRow className="hover:bg-transparent">
                         <TableCell
-                          colSpan={5}
+                          colSpan={6}
                           className="py-16 text-center text-muted-foreground"
                         >
                           <ShoppingBag className="h-8 w-8 mx-auto mb-3 opacity-30" />
@@ -369,7 +375,7 @@ function OrdersPage() {
                     {!isLoading && !isError && orders?.length === 0 && (
                       <TableRow className="hover:bg-transparent">
                         <TableCell
-                          colSpan={5}
+                          colSpan={6}
                           className="py-16 text-center text-muted-foreground"
                         >
                           <ShoppingBag className="h-8 w-8 mx-auto mb-3 opacity-30" />

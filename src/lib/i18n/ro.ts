@@ -148,6 +148,7 @@ export const ro = {
     tableDate: "Dată",
     tableCustomer: "Client",
     tableTotal: "Total",
+    tablePayment: "Plată",
     tableStatus: "Status",
     noOrders: "Nu s-au găsit comenzi",
     noOrdersDesc: "Tranzacțiile vor apărea aici după ce clienții vor face achiziții.",
